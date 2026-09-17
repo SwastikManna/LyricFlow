@@ -4,7 +4,8 @@ import type { SyncedLyrics } from "@/types/lyrics";
 function findLineIndex(lines: SyncedLyrics["lines"], time: number) {
   // Lines are ordered, so a simple scan from the last known position is cheap.
   for (let i = lines.length - 1; i >= 0; i--) {
-    if (time >= lines[i].start) return time <= lines[i].end + 0.75 ? i : i;
+    const line = lines[i]!;
+    if (time >= line.start) return i;
   }
   return -1;
 }
