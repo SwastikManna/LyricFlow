@@ -10,7 +10,7 @@ interface LyricLineProps {
   distance: number;
   onSeek: (time: number) => void;
   /** Only supplied for the active line, so only it re-renders per frame. */
-  subscribeTime?: (listener: (time: number) => void) => () => void;
+  subscribeTime?: ((listener: (time: number) => void) => () => void) | undefined;
 }
 
 export function LyricLine({ line, isActive, distance, onSeek, subscribeTime }: LyricLineProps) {

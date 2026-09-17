@@ -5,10 +5,10 @@ import { formatFileSize, isAcceptedAudioFile } from "@/api/songs";
 
 interface UploadBoxProps {
   onSubmit: (file: File) => void;
-  isUploading?: boolean;
-  progress?: number;
+  isUploading?: boolean | undefined;
+  progress?: number | undefined;
   /** Compact variant for the landing hero. */
-  compact?: boolean;
+  compact?: boolean | undefined;
 }
 
 export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact = false }: UploadBoxProps) {

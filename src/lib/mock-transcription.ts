@@ -63,7 +63,7 @@ export function generateMockLyrics(songId: string, duration: number): SyncedLyri
 
   const lines: LyricLine[] = [];
   for (let i = 0; i < lineCount; i++) {
-    const text = cleanLine(VERSES[(i + seed) % VERSES.length]);
+    const text = cleanLine(VERSES[(i + seed) % VERSES.length]!);
     const start = Number((intro + i * perLine).toFixed(2));
     // Small breath between lines keeps highlighting from feeling mechanical.
     const end = Number((start + perLine * 0.88).toFixed(2));

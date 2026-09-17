@@ -188,7 +188,7 @@ export async function processSong(
   if (!song) throw new Error("Song not found");
 
   for (let i = 0; i < PROCESSING_STAGES.length; i++) {
-    const stage = PROCESSING_STAGES[i];
+    const stage = PROCESSING_STAGES[i]!;
     if (signal?.aborted) throw new DOMException("Processing cancelled", "AbortError");
     patch(id, { processingStatus: stage.status });
     onStage?.(i, {
@@ -221,7 +221,7 @@ export async function getSongStatus(id: string): Promise<SongStatus | null> {
   if (!song) return null;
   const stage =
     PROCESSING_STAGES.find((s) => s.status === song.processingStatus) ??
-    PROCESSING_STAGES[PROCESSING_STAGES.length - 1];
+    PROCESSING_STAGES[PROCESSING_STAGES.length - 1]!;
   return {
     songId: id,
     processingStatus: song.processingStatus,

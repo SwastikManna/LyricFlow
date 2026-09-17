@@ -3,9 +3,9 @@ import { Disc3 } from "lucide-react";
 
 interface AlbumArtworkProps {
   title: string;
-  coverImageUrl?: string | null;
-  isPlaying?: boolean;
-  className?: string;
+  coverImageUrl?: string | null | undefined;
+  isPlaying?: boolean | undefined;
+  className?: string | undefined;
 }
 
 /** Cover art, or a generated gradient placeholder derived from the title. */
