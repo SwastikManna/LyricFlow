@@ -1,6 +1,6 @@
 import type { Song, SongStatus, ProcessingStatus } from "@/types/song";
 import type { Lyrics, SyncedLyrics } from "@/types/lyrics";
-import { generateMockLyrics } from "@/lib/mock-transcription";
+import { transcribeAudio } from "@/lib/ai-transcription";
 
 /**
  * Song API abstraction.
@@ -26,6 +26,8 @@ const MOCK_USER_ID = "local-user";
 
 /** Object URLs cannot survive a reload, so they are kept in memory only. */
 const audioUrls = new Map<string, string>();
+/** Original files, kept in memory so they can be sent for transcription. */
+const audioFiles = new Map<string, File>();
 
 type StoredSong = Omit<Song, "originalFileUrl" | "audioFileUrl"> & {
   fileName: string;
@@ -119,6 +121,7 @@ export async function createSong({
   const duration = await readDuration(file);
   const url = URL.createObjectURL(file);
   audioUrls.set(id, url);
+  audioFiles.set(id, file);
 
   const song: Song = {
     id,
@@ -186,30 +189,47 @@ export async function processSong(
 ): Promise<Song> {
   const song = await getSong(id);
   if (!song) throw new Error("Song not found");
+  const file = audioFiles.get(id);
+  if (!file) throw new Error("The audio for this song is no longer available. Please upload it again.");
 
-  for (let i = 0; i < PROCESSING_STAGES.length; i++) {
-    const stage = PROCESSING_STAGES[i]!;
-    if (signal?.aborted) throw new DOMException("Processing cancelled", "AbortError");
-    patch(id, { processingStatus: stage.status });
-    onStage?.(i, {
-      songId: id,
-      processingStatus: stage.status,
-      progress: stage.progress,
-      stage: stage.label,
-    });
-    await wait(stage.durationMs);
+  const transcribeIndex = PROCESSING_STAGES.findIndex((s) => s.key === "transcribe");
+  let transcription: Promise<SyncedLyrics> | null = null;
+
+  try {
+    for (let i = 0; i < PROCESSING_STAGES.length; i++) {
+      const stage = PROCESSING_STAGES[i]!;
+      if (signal?.aborted) throw new DOMException("Processing cancelled", "AbortError");
+      patch(id, { processingStatus: stage.status });
+      onStage?.(i, {
+        songId: id,
+        processingStatus: stage.status,
+        progress: stage.progress,
+        stage: stage.label,
+      });
+      // Start the real AI call early so it runs while the intro stages animate.
+      if (i === 1) transcription = transcribeAudio(id, file, song.duration, signal);
+      if (i === transcribeIndex && transcription) {
+        const synced = await transcription;
+        const lyrics: Lyrics = {
+          id: `lyrics_${id}`,
+          songId: id,
+          language: synced.language,
+          source: "AI_TRANSCRIPTION",
+          synchronizedLyrics: synced,
+        };
+        const all = readMap<Lyrics>(LYRICS_KEY);
+        all[id] = lyrics;
+        writeMap(LYRICS_KEY, all);
+      } else {
+        await wait(Math.min(stage.durationMs, 900));
+      }
+    }
+  } catch (err) {
+    if (!(err instanceof DOMException && err.name === "AbortError")) {
+      patch(id, { processingStatus: "FAILED" });
+    }
+    throw err;
   }
-
-  const lyrics: Lyrics = {
-    id: `lyrics_${id}`,
-    songId: id,
-    language: "en",
-    source: "MOCK",
-    synchronizedLyrics: generateMockLyrics(id, song.duration),
-  };
-  const all = readMap<Lyrics>(LYRICS_KEY);
-  all[id] = lyrics;
-  writeMap(LYRICS_KEY, all);
 
   patch(id, { processingStatus: "READY" });
   return (await getSong(id))!;
@@ -263,6 +283,7 @@ export async function deleteSong(id: string): Promise<void> {
   const url = audioUrls.get(id);
   if (url) URL.revokeObjectURL(url);
   audioUrls.delete(id);
+  audioFiles.delete(id);
 }
 
 /** Records the true duration once the audio element reports it. */

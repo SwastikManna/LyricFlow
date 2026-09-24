@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ProcessingStatus } from "@/components/ProcessingStatus";
-import { getSong, processSong, PROCESSING_STAGES } from "@/api/songs";
+import { getSong, hasPlayableAudio, processSong, PROCESSING_STAGES } from "@/api/songs";
 import type { Song } from "@/types/song";
 
 export const Route = createFileRoute("/processing/$songId")({
@@ -37,6 +37,7 @@ function ProcessingPage() {
   const [stageIndex, setStageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [missing, setMissing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -45,7 +46,7 @@ function ProcessingPage() {
     (async () => {
       const found = await getSong(songId);
       if (cancelled) return;
-      if (!found) {
+      if (!found || !hasPlayableAudio(songId)) {
         setMissing(true);
         return;
       }
@@ -69,8 +70,9 @@ function ProcessingPage() {
             500,
           );
         }
-      } catch {
-        /* aborted on unmount */
+      } catch (err) {
+        if (cancelled || (err instanceof DOMException && err.name === "AbortError")) return;
+        setError(err instanceof Error ? err.message : "Something went wrong analyzing this track.");
       }
     })();
 
@@ -80,13 +82,15 @@ function ProcessingPage() {
     };
   }, [songId, navigate]);
 
-  if (missing) {
+  if (missing || error) {
     return (
       <main className="bg-stage flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
-        <h1 className="font-display text-2xl font-semibold">This song isn't available</h1>
+        <h1 className="font-display text-2xl font-semibold">
+          {error ? "We couldn't read the lyrics" : "This song isn't available"}
+        </h1>
         <p className="max-w-sm text-muted-foreground">
-          Uploaded audio lives in this browser session only, so it's gone after a reload. Upload the
-          track again to keep listening.
+          {error ??
+            "Uploaded audio lives in this browser session only, so it's gone after a reload. Upload the track again to keep listening."}
         </p>
         <Link
           to="/upload"
