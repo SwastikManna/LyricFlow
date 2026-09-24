@@ -27,7 +27,7 @@ export async function transcribeAudio(
 ): Promise<SyncedLyrics> {
   const form = new FormData();
   form.append("file", file, file.name);
-  const res = await fetch("/api/transcribe", { method: "POST", body: form, signal });
+  const res = await fetch("/api/transcribe", { method: "POST", body: form, signal: signal ?? null });
   const body = (await res.json().catch(() => ({}))) as {
     error?: string;
     language?: string;
