@@ -1,84 +1,33 @@
 import type { Song, SongStatus, ProcessingStatus } from "@/types/song";
-import type { Lyrics, SyncedLyrics } from "@/types/lyrics";
-import { transcribeAudio } from "@/lib/ai-transcription";
+import type { Lyrics } from "@/types/lyrics";
+import { transcribeSavedSong } from "@/lib/ai-transcription";
+import {
+  deleteSongFn,
+  getSongFn,
+  listSongsFn,
+  setSongDurationFn,
+  type LibrarySong,
+} from "@/lib/songs.functions";
 
 /**
- * Song API abstraction.
- *
- * Mirrors the eventual HTTP surface:
- *   POST   /api/songs
- *   GET    /api/songs/:id
- *   GET    /api/songs/:id/status
- *   GET    /api/songs/:id/lyrics
- *   POST   /api/songs/:id/process
- *   PUT    /api/songs/:id/lyrics
- *   DELETE /api/songs/:id
- *
- * Today it is backed by an in-browser store (object URLs + localStorage
- * metadata) and a simulated processing pipeline. Every function is async, so
- * swapping the bodies for real server-function / fetch calls later does not
- * touch any UI code. No API keys ever live in this layer.
+ * Song API used by the UI. Audio and lyrics are saved online; songs are tied
+ * to this browser through an anonymous device id (no sign-in yet).
  */
 
-const META_KEY = "lyricflow:songs";
-const LYRICS_KEY = "lyricflow:lyrics";
-const MOCK_USER_ID = "local-user";
+const DEVICE_KEY = "lyricflow:device";
 
-/** Object URLs cannot survive a reload, so they are kept in memory only. */
-const audioUrls = new Map<string, string>();
-/** Original files, kept in memory so they can be sent for transcription. */
-const audioFiles = new Map<string, File>();
-
-type StoredSong = Omit<Song, "originalFileUrl" | "audioFileUrl"> & {
-  fileName: string;
-  fileSize: number;
-};
-
-function isBrowser() {
-  return typeof window !== "undefined";
-}
-
-function readMap<T>(key: string): Record<string, T> {
-  if (!isBrowser()) return {};
-  try {
-    return JSON.parse(window.localStorage.getItem(key) ?? "{}") as Record<string, T>;
-  } catch {
-    return {};
+export function getDeviceId(): string {
+  if (typeof window === "undefined") return "";
+  let id = window.localStorage.getItem(DEVICE_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    window.localStorage.setItem(DEVICE_KEY, id);
   }
-}
-
-function writeMap<T>(key: string, value: Record<string, T>) {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(key, JSON.stringify(value));
-}
-
-function hydrate(stored: StoredSong): Song {
-  const url = audioUrls.get(stored.id) ?? "";
-  return { ...stored, originalFileUrl: url, audioFileUrl: url };
-}
-
-function persist(song: Song, extra: { fileName: string; fileSize: number }) {
-  const songs = readMap<StoredSong>(META_KEY);
-  const { originalFileUrl: _o, audioFileUrl: _a, ...rest } = song;
-  songs[song.id] = { ...rest, ...extra };
-  writeMap(META_KEY, songs);
-}
-
-function patch(id: string, changes: Partial<StoredSong>) {
-  const songs = readMap<StoredSong>(META_KEY);
-  if (!songs[id]) return;
-  songs[id] = { ...songs[id], ...changes };
-  writeMap(META_KEY, songs);
-}
-
-function guessTitle(fileName: string) {
-  const base = fileName.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
-  if (!base) return "Untitled track";
-  return base.replace(/\s+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return id;
 }
 
 async function readDuration(file: File): Promise<number> {
-  if (!isBrowser()) return 0;
+  if (typeof window === "undefined") return 0;
   return new Promise((resolve) => {
     const el = document.createElement("audio");
     const url = URL.createObjectURL(file);
@@ -95,67 +44,62 @@ async function readDuration(file: File): Promise<number> {
 
 export interface CreateSongInput {
   file: File;
-  title?: string;
-  artist?: string;
   onProgress?: (percent: number) => void;
   signal?: AbortSignal;
 }
 
-/** POST /api/songs — uploads the file and creates the song entry. */
-export async function createSong({
-  file,
-  title,
-  artist,
-  onProgress,
-  signal,
-}: CreateSongInput): Promise<Song> {
-  const id = `song_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
-
-  // Simulated upload progress; a real implementation streams to storage.
-  for (let p = 0; p <= 100; p += 10) {
-    if (signal?.aborted) throw new DOMException("Upload cancelled", "AbortError");
-    onProgress?.(p);
-    await wait(70);
-  }
-
+/** Uploads the file and creates the saved song. Resolves with the new song id. */
+export async function createSong({ file, onProgress, signal }: CreateSongInput): Promise<{ id: string }> {
   const duration = await readDuration(file);
-  const url = URL.createObjectURL(file);
-  audioUrls.set(id, url);
-  audioFiles.set(id, file);
+  const form = new FormData();
+  form.append("file", file, file.name);
+  form.append("deviceId", getDeviceId());
+  form.append("duration", String(duration));
 
-  const song: Song = {
-    id,
-    userId: MOCK_USER_ID,
-    title: title?.trim() || guessTitle(file.name),
-    artist: artist?.trim() || "Unknown artist",
-    duration,
-    originalFileUrl: url,
-    audioFileUrl: url,
-    coverImageUrl: null,
-    processingStatus: "UPLOADED",
-    createdAt: new Date().toISOString(),
-  };
-
-  persist(song, { fileName: file.name, fileSize: file.size });
-  return song;
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/songs");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      let body: { id?: string; error?: string } = {};
+      try {
+        body = JSON.parse(xhr.responseText);
+      } catch {
+        /* ignore */
+      }
+      if (xhr.status >= 200 && xhr.status < 300 && body.id) resolve({ id: body.id });
+      else reject(new Error(body.error ?? "Upload failed."));
+    };
+    xhr.onerror = () => reject(new Error("Upload failed. Check your connection."));
+    xhr.onabort = () => reject(new DOMException("Upload cancelled", "AbortError"));
+    signal?.addEventListener("abort", () => xhr.abort());
+    xhr.send(form);
+  });
 }
 
-/** GET /api/songs/:id */
+/** Loads a saved song (with a playable audio URL) and its lyrics. */
+export async function getSongWithLyrics(id: string): Promise<{ song: Song; lyrics: Lyrics | null } | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  return getSongFn({ data: { id, deviceId: getDeviceId() } });
+}
+
 export async function getSong(id: string): Promise<Song | null> {
-  const stored = readMap<StoredSong>(META_KEY)[id];
-  return stored ? hydrate(stored) : null;
+  return (await getSongWithLyrics(id))?.song ?? null;
 }
 
-/** GET /api/songs — most recent first. */
-export async function listSongs(): Promise<Song[]> {
-  return Object.values(readMap<StoredSong>(META_KEY))
-    .map(hydrate)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+export async function listSongs(): Promise<LibrarySong[]> {
+  return listSongsFn({ data: { deviceId: getDeviceId() } });
 }
 
-/** True when the in-memory audio URL is gone (e.g. after a page reload). */
-export function hasPlayableAudio(id: string) {
-  return audioUrls.has(id);
+export async function deleteSong(id: string): Promise<void> {
+  await deleteSongFn({ data: { id, deviceId: getDeviceId() } });
+}
+
+export async function setSongDuration(id: string, duration: number): Promise<void> {
+  if (!Number.isFinite(duration) || duration <= 0) return;
+  await setSongDurationFn({ data: { id, deviceId: getDeviceId(), duration } }).catch(() => {});
 }
 
 export interface ProcessingStage {
@@ -163,133 +107,34 @@ export interface ProcessingStage {
   label: string;
   doneLabel: string;
   status: ProcessingStatus;
-  /** Progress value reached when this stage completes. */
   progress: number;
   durationMs: number;
 }
 
 export const PROCESSING_STAGES: ProcessingStage[] = [
-  { key: "upload", label: "Uploading audio", doneLabel: "Audio uploaded", status: "UPLOADED", progress: 12, durationMs: 900 },
-  { key: "extract", label: "Extracting audio", doneLabel: "Audio extracted", status: "PROCESSING", progress: 30, durationMs: 1400 },
-  { key: "vocals", label: "Analyzing vocals", doneLabel: "Vocals isolated", status: "PROCESSING", progress: 48, durationMs: 1600 },
-  { key: "transcribe", label: "Transcribing lyrics", doneLabel: "Lyrics detected", status: "TRANSCRIBING", progress: 70, durationMs: 2000 },
-  { key: "align", label: "Synchronizing timestamps", doneLabel: "Lyrics synchronized", status: "ALIGNING", progress: 90, durationMs: 1700 },
-  { key: "finalize", label: "Finalizing", doneLabel: "Ready to play", status: "READY", progress: 100, durationMs: 900 },
+  { key: "upload", label: "Uploading audio", doneLabel: "Audio uploaded", status: "UPLOADED", progress: 12, durationMs: 500 },
+  { key: "extract", label: "Extracting audio", doneLabel: "Audio extracted", status: "PROCESSING", progress: 30, durationMs: 800 },
+  { key: "vocals", label: "Analyzing vocals", doneLabel: "Vocals isolated", status: "PROCESSING", progress: 48, durationMs: 800 },
+  { key: "transcribe", label: "Transcribing lyrics", doneLabel: "Lyrics detected", status: "TRANSCRIBING", progress: 70, durationMs: 0 },
+  { key: "align", label: "Synchronizing timestamps", doneLabel: "Lyrics synchronized", status: "ALIGNING", progress: 90, durationMs: 600 },
+  { key: "finalize", label: "Finalizing", doneLabel: "Ready to play", status: "READY", progress: 100, durationMs: 400 },
 ];
 
-/**
- * POST /api/songs/:id/process — kicks off the pipeline.
- * Mocked as a client-side timeline; later this enqueues a background job and
- * the UI simply keeps polling `getSongStatus`.
- */
+/** Runs AI transcription for a saved song while stepping through the stages. */
 export async function processSong(
   id: string,
   onStage?: (stageIndex: number, status: SongStatus) => void,
   signal?: AbortSignal,
-): Promise<Song> {
-  const song = await getSong(id);
-  if (!song) throw new Error("Song not found");
-  const file = audioFiles.get(id);
-  if (!file) throw new Error("The audio for this song is no longer available. Please upload it again.");
-
-  const transcribeIndex = PROCESSING_STAGES.findIndex((s) => s.key === "transcribe");
-  let transcription: Promise<SyncedLyrics> | null = null;
-
-  try {
-    for (let i = 0; i < PROCESSING_STAGES.length; i++) {
-      const stage = PROCESSING_STAGES[i]!;
-      if (signal?.aborted) throw new DOMException("Processing cancelled", "AbortError");
-      patch(id, { processingStatus: stage.status });
-      onStage?.(i, {
-        songId: id,
-        processingStatus: stage.status,
-        progress: stage.progress,
-        stage: stage.label,
-      });
-      // Start the real AI call early so it runs while the intro stages animate.
-      if (i === 1) transcription = transcribeAudio(id, file, song.duration, signal);
-      if (i === transcribeIndex && transcription) {
-        const synced = await transcription;
-        const lyrics: Lyrics = {
-          id: `lyrics_${id}`,
-          songId: id,
-          language: synced.language,
-          source: "AI_TRANSCRIPTION",
-          synchronizedLyrics: synced,
-        };
-        const all = readMap<Lyrics>(LYRICS_KEY);
-        all[id] = lyrics;
-        writeMap(LYRICS_KEY, all);
-      } else {
-        await wait(Math.min(stage.durationMs, 900));
-      }
-    }
-  } catch (err) {
-    if (!(err instanceof DOMException && err.name === "AbortError")) {
-      patch(id, { processingStatus: "FAILED" });
-    }
-    throw err;
+): Promise<void> {
+  const transcription = transcribeSavedSong(id, getDeviceId(), signal);
+  transcription.catch(() => {});
+  for (let i = 0; i < PROCESSING_STAGES.length; i++) {
+    const stage = PROCESSING_STAGES[i]!;
+    if (signal?.aborted) throw new DOMException("Processing cancelled", "AbortError");
+    onStage?.(i, { songId: id, processingStatus: stage.status, progress: stage.progress, stage: stage.label });
+    if (stage.key === "transcribe") await transcription;
+    else await wait(stage.durationMs);
   }
-
-  patch(id, { processingStatus: "READY" });
-  return (await getSong(id))!;
-}
-
-/** GET /api/songs/:id/status */
-export async function getSongStatus(id: string): Promise<SongStatus | null> {
-  const song = await getSong(id);
-  if (!song) return null;
-  const stage =
-    PROCESSING_STAGES.find((s) => s.status === song.processingStatus) ??
-    PROCESSING_STAGES[PROCESSING_STAGES.length - 1]!;
-  return {
-    songId: id,
-    processingStatus: song.processingStatus,
-    progress: song.processingStatus === "READY" ? 100 : stage.progress,
-    stage: stage.label,
-  };
-}
-
-/** GET /api/songs/:id/lyrics */
-export async function getSongLyrics(id: string): Promise<Lyrics | null> {
-  return readMap<Lyrics>(LYRICS_KEY)[id] ?? null;
-}
-
-/** PUT /api/songs/:id/lyrics */
-export async function updateSongLyrics(id: string, synchronizedLyrics: SyncedLyrics): Promise<Lyrics> {
-  const all = readMap<Lyrics>(LYRICS_KEY);
-  const next: Lyrics = {
-    id: all[id]?.id ?? `lyrics_${id}`,
-    songId: id,
-    language: synchronizedLyrics.language,
-    source: "MANUAL",
-    synchronizedLyrics,
-  };
-  all[id] = next;
-  writeMap(LYRICS_KEY, all);
-  return next;
-}
-
-/** DELETE /api/songs/:id */
-export async function deleteSong(id: string): Promise<void> {
-  const songs = readMap<StoredSong>(META_KEY);
-  delete songs[id];
-  writeMap(META_KEY, songs);
-
-  const all = readMap<Lyrics>(LYRICS_KEY);
-  delete all[id];
-  writeMap(LYRICS_KEY, all);
-
-  const url = audioUrls.get(id);
-  if (url) URL.revokeObjectURL(url);
-  audioUrls.delete(id);
-  audioFiles.delete(id);
-}
-
-/** Records the true duration once the audio element reports it. */
-export async function setSongDuration(id: string, duration: number): Promise<void> {
-  if (!Number.isFinite(duration) || duration <= 0) return;
-  patch(id, { duration: Math.round(duration) });
 }
 
 export const ACCEPTED_AUDIO_TYPES = [".mp3", ".mp4", ".wav", ".m4a"] as const;
