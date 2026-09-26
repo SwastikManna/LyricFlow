@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { normalizeLyrics } from "@/lib/ai-transcription";
 
 const MAX_BYTES = 20 * 1024 * 1024;
 const MODEL = "google/gemini-3.8-flash";
@@ -93,7 +94,7 @@ export const Route = createFileRoute("/api/transcribe")({
           }
           if (upstream.status === 402) message = "AI credits are used up. Add credits to keep transcribing.";
           if (upstream.status === 429) message = "Too many requests right now. Please try again in a minute.";
-          return json({ error: message }, upstream.status);
+          return fail(message, upstream.status);
         }
 
         // Accumulate SSE deltas server-side.
@@ -117,7 +118,7 @@ export const Route = createFileRoute("/api/transcribe")({
                 choices?: { delta?: { content?: string } }[];
                 error?: { message?: string };
               };
-              if (evt.error) return json({ error: evt.error.message ?? "Transcription failed." }, 502);
+              if (evt.error) return fail(evt.error.message ?? "Transcription failed.", 502);
               text += evt.choices?.[0]?.delta?.content ?? "";
             } catch {
               /* partial frame */
@@ -126,12 +127,27 @@ export const Route = createFileRoute("/api/transcribe")({
         }
 
         const match = text.match(/\{[\s\S]*\}/);
-        if (!match) return json({ error: "The AI didn't return any lyrics for this track." }, 502);
+        if (!match) return fail("The AI didn't return any lyrics for this track.", 502);
+        let parsed: { language?: unknown; lines?: unknown };
         try {
-          return json(JSON.parse(match[0]));
+          parsed = JSON.parse(match[0]);
         } catch {
-          return json({ error: "The AI returned lyrics in an unreadable format." }, 502);
+          return fail("The AI returned lyrics in an unreadable format.", 502);
         }
+        const lyrics = normalizeLyrics(id, parsed, Number(row.duration) || 0);
+        if (!lyrics) return fail("No vocals were detected in this track.", 422);
+
+        await db
+          .from("songs" as never)
+          .update({
+            lyrics,
+            language: lyrics.language,
+            lyrics_source: "AI_TRANSCRIPTION",
+            processing_status: "READY",
+            error_message: null,
+          } as never)
+          .eq("id", id);
+        return json({ lyrics });
       },
     },
   },
