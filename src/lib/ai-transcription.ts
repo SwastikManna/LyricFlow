@@ -18,26 +18,15 @@ function spreadWords(text: string, start: number, end: number): LyricWord[] {
   });
 }
 
-/** Sends the audio to the server for AI transcription and returns clean synced lyrics. */
-export async function transcribeAudio(
+/** Cleans raw AI output into well-formed synced lyrics. Returns null when there are no lines. */
+export function normalizeLyrics(
   songId: string,
-  file: File,
+  body: { language?: unknown; lines?: unknown },
   duration: number,
-  signal?: AbortSignal,
-): Promise<SyncedLyrics> {
-  const form = new FormData();
-  form.append("file", file, file.name);
-  const res = await fetch("/api/transcribe", { method: "POST", body: form, signal: signal ?? null });
-  const body = (await res.json().catch(() => ({}))) as {
-    error?: string;
-    language?: string;
-    lines?: RawLine[];
-  };
-  if (!res.ok) throw new Error(body.error ?? "Transcription failed.");
-
+): SyncedLyrics | null {
   const max = duration > 0 ? duration : Infinity;
   const lines: LyricLine[] = [];
-  for (const raw of body.lines ?? []) {
+  for (const raw of (Array.isArray(body.lines) ? body.lines : []) as RawLine[]) {
     const text = String(raw.text ?? "").trim();
     let start = num(raw.start);
     let end = num(raw.end);
@@ -58,7 +47,23 @@ export async function transcribeAudio(
 
     lines.push({ id: `${songId}-line-${lines.length + 1}`, text, start, end, words });
   }
+  if (lines.length === 0) return null;
+  return { language: typeof body.language === "string" && body.language ? body.language : "en", lines };
+}
 
-  if (lines.length === 0) throw new Error("No vocals were detected in this track.");
-  return { language: body.language || "en", lines };
+/** Asks the server to transcribe a saved song; the lyrics are stored with the song. */
+export async function transcribeSavedSong(
+  songId: string,
+  deviceId: string,
+  signal?: AbortSignal,
+): Promise<SyncedLyrics> {
+  const res = await fetch("/api/transcribe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: songId, deviceId }),
+    signal: signal ?? null,
+  });
+  const body = (await res.json().catch(() => ({}))) as { error?: string; lyrics?: SyncedLyrics };
+  if (!res.ok || !body.lyrics) throw new Error(body.error ?? "Transcription failed.");
+  return body.lyrics;
 }
