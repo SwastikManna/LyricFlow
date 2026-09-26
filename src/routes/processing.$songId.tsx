@@ -44,10 +44,14 @@ function ProcessingPage() {
     let cancelled = false;
 
     (async () => {
-      const found = await getSong(songId);
+      const found = await getSong(songId).catch(() => null);
       if (cancelled) return;
-      if (!found || !hasPlayableAudio(songId)) {
+      if (!found) {
         setMissing(true);
+        return;
+      }
+      if (found.processingStatus === "READY") {
+        navigate({ to: "/player/$songId", params: { songId }, replace: true });
         return;
       }
       setSong(found);

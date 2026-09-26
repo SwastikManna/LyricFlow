@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { normalizeLyrics } from "@/lib/ai-transcription";
 
 const MAX_BYTES = 20 * 1024 * 1024;
 const MODEL = "google/gemini-3.8-flash";
@@ -33,24 +34,32 @@ export const Route = createFileRoute("/api/transcribe")({
         const key = process.env["LOVABLE_API_KEY"];
         if (!key) return json({ error: "AI is not configured." }, 500);
 
-        const declared = Number(request.headers.get("content-length") ?? 0);
-        if (declared > MAX_BYTES + 1024 * 1024) {
-          return json({ error: "This file is too large to analyze (max 20 MB)." }, 413);
-        }
+        const input = (await request.json().catch(() => null)) as { id?: unknown; deviceId?: unknown } | null;
+        const id = typeof input?.id === "string" ? input.id : "";
+        const deviceId = typeof input?.deviceId === "string" ? input.deviceId : "";
+        if (!/^[0-9a-f-]{36}$/i.test(id) || deviceId.length < 8) return json({ error: "Invalid request." }, 400);
 
-        const form = await request.formData();
-        const file = form.get("file");
-        if (!(file instanceof File) || file.size === 0) {
-          return json({ error: "No audio file received." }, 400);
-        }
-        if (file.size > MAX_BYTES) {
-          return json({ error: "This file is too large to analyze (max 20 MB)." }, 413);
-        }
-        const ext = file.name.toLowerCase().split(".").pop() ?? "";
+        const { admin, getOwnedRow, BUCKET } = await import("@/lib/songs.server");
+        const row = await getOwnedRow(id, deviceId);
+        if (!row) return json({ error: "Song not found." }, 404);
+        const db = await admin();
+        const setStatus = (processing_status: string, error_message: string | null = null) =>
+          db.from("songs" as never).update({ processing_status, error_message } as never).eq("id", id);
+
+        if (row.file_size > MAX_BYTES) return json({ error: "This file is too large to analyze (max 20 MB)." }, 413);
+        const ext = row.file_name.toLowerCase().split(".").pop() ?? "";
         const format = FORMATS[ext];
         if (!format) return json({ error: "Unsupported audio format." }, 400);
 
-        const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
+        const { data: blob, error: dlErr } = await db.storage.from(BUCKET).download(row.file_path);
+        if (dlErr || !blob) return json({ error: "Couldn't load the saved audio." }, 500);
+        await setStatus("TRANSCRIBING");
+        const fail = async (message: string, status: number) => {
+          await setStatus("FAILED", message);
+          return json({ error: message }, status);
+        };
+
+        const base64 = Buffer.from(await blob.arrayBuffer()).toString("base64");
 
         const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -85,7 +94,7 @@ export const Route = createFileRoute("/api/transcribe")({
           }
           if (upstream.status === 402) message = "AI credits are used up. Add credits to keep transcribing.";
           if (upstream.status === 429) message = "Too many requests right now. Please try again in a minute.";
-          return json({ error: message }, upstream.status);
+          return fail(message, upstream.status);
         }
 
         // Accumulate SSE deltas server-side.
@@ -109,7 +118,7 @@ export const Route = createFileRoute("/api/transcribe")({
                 choices?: { delta?: { content?: string } }[];
                 error?: { message?: string };
               };
-              if (evt.error) return json({ error: evt.error.message ?? "Transcription failed." }, 502);
+              if (evt.error) return fail(evt.error.message ?? "Transcription failed.", 502);
               text += evt.choices?.[0]?.delta?.content ?? "";
             } catch {
               /* partial frame */
@@ -118,12 +127,27 @@ export const Route = createFileRoute("/api/transcribe")({
         }
 
         const match = text.match(/\{[\s\S]*\}/);
-        if (!match) return json({ error: "The AI didn't return any lyrics for this track." }, 502);
+        if (!match) return fail("The AI didn't return any lyrics for this track.", 502);
+        let parsed: { language?: unknown; lines?: unknown };
         try {
-          return json(JSON.parse(match[0]));
+          parsed = JSON.parse(match[0]);
         } catch {
-          return json({ error: "The AI returned lyrics in an unreadable format." }, 502);
+          return fail("The AI returned lyrics in an unreadable format.", 502);
         }
+        const lyrics = normalizeLyrics(id, parsed, Number(row.duration) || 0);
+        if (!lyrics) return fail("No vocals were detected in this track.", 422);
+
+        await db
+          .from("songs" as never)
+          .update({
+            lyrics,
+            language: lyrics.language,
+            lyrics_source: "AI_TRANSCRIPTION",
+            processing_status: "READY",
+            error_message: null,
+          } as never)
+          .eq("id", id);
+        return json({ lyrics });
       },
     },
   },

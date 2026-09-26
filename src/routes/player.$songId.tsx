@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { getSong, getSongLyrics, hasPlayableAudio } from "@/api/songs";
+import { getSongWithLyrics } from "@/api/songs";
 import type { Song } from "@/types/song";
 import type { SyncedLyrics } from "@/types/lyrics";
 
@@ -39,20 +39,15 @@ function PlayerPage() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const [found, storedLyrics] = await Promise.all([
-        getSong(songId),
-        getSongLyrics(songId),
-      ]);
-      if (cancelled) return;
-      if (!found || !hasPlayableAudio(songId)) {
-        setState("unavailable");
-        return;
-      }
-      setSong(found);
-      setLyrics(storedLyrics?.synchronizedLyrics ?? null);
-      setState("ready");
-    })();
+    getSongWithLyrics(songId)
+      .then((found) => {
+        if (cancelled) return;
+        if (!found) return setState("unavailable");
+        setSong(found.song);
+        setLyrics(found.lyrics?.synchronizedLyrics ?? null);
+        setState("ready");
+      })
+      .catch(() => !cancelled && setState("unavailable"));
     return () => {
       cancelled = true;
     };
@@ -69,17 +64,18 @@ function PlayerPage() {
   if (state === "unavailable" || !song) {
     return (
       <main className="bg-stage flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
-        <h1 className="font-display text-2xl font-semibold">This track isn't loaded anymore</h1>
+        <h1 className="font-display text-2xl font-semibold">We couldn't find this track</h1>
         <p className="max-w-sm text-muted-foreground">
-          Your audio stays in this browser session and isn't kept after a reload. Upload the song
-          again to play it with live lyrics.
+          It may have been deleted, or it was uploaded from another browser.
         </p>
-        <Link
-          to="/upload"
-          className="mt-2 rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground shadow-glow"
-        >
-          Upload a song
-        </Link>
+        <div className="mt-2 flex gap-3">
+          <Link to="/library" className="rounded-full border border-glass-border px-6 py-3 font-medium hover:bg-glass">
+            Your library
+          </Link>
+          <Link to="/upload" className="rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground shadow-glow">
+            Upload a song
+          </Link>
+        </div>
       </main>
     );
   }

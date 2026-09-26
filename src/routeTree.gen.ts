@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LibraryRouteImport } from './routes/library'
 import { Route as UploadRouteImport } from './routes/upload'
+import { Route as ApiSongsRouteImport } from './routes/api/songs'
 import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
 import { Route as PlayerSongIdRouteImport } from './routes/player.$songId'
 import { Route as ProcessingSongIdRouteImport } from './routes/processing.$songId'
@@ -20,9 +22,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LibraryRoute = LibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UploadRoute = UploadRouteImport.update({
   id: '/upload',
   path: '/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSongsRoute = ApiSongsRouteImport.update({
+  id: '/api/songs',
+  path: '/api/songs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
@@ -43,14 +55,18 @@ const ProcessingSongIdRoute = ProcessingSongIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/library': typeof LibraryRoute
   '/upload': typeof UploadRoute
+  '/api/songs': typeof ApiSongsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
   '/player/$songId': typeof PlayerSongIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/library': typeof LibraryRoute
   '/upload': typeof UploadRoute
+  '/api/songs': typeof ApiSongsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
   '/player/$songId': typeof PlayerSongIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
@@ -58,7 +74,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/library': typeof LibraryRoute
   '/upload': typeof UploadRoute
+  '/api/songs': typeof ApiSongsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
   '/player/$songId': typeof PlayerSongIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
@@ -67,21 +85,27 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/library'
     | '/upload'
+    | '/api/songs'
     | '/api/transcribe'
     | '/player/$songId'
     | '/processing/$songId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/library'
     | '/upload'
+    | '/api/songs'
     | '/api/transcribe'
     | '/player/$songId'
     | '/processing/$songId'
   id:
     | '__root__'
     | '/'
+    | '/library'
     | '/upload'
+    | '/api/songs'
     | '/api/transcribe'
     | '/player/$songId'
     | '/processing/$songId'
@@ -89,7 +113,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LibraryRoute: typeof LibraryRoute
   UploadRoute: typeof UploadRoute
+  ApiSongsRoute: typeof ApiSongsRoute
   ApiTranscribeRoute: typeof ApiTranscribeRoute
   PlayerSongIdRoute: typeof PlayerSongIdRoute
   ProcessingSongIdRoute: typeof ProcessingSongIdRoute
@@ -104,11 +130,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/library': {
+      id: '/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof LibraryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/upload': {
       id: '/upload'
       path: '/upload'
       fullPath: '/upload'
       preLoaderRoute: typeof UploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/songs': {
+      id: '/api/songs'
+      path: '/api/songs'
+      fullPath: '/api/songs'
+      preLoaderRoute: typeof ApiSongsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/transcribe': {
@@ -137,7 +177,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LibraryRoute: LibraryRoute,
   UploadRoute: UploadRoute,
+  ApiSongsRoute: ApiSongsRoute,
   ApiTranscribeRoute: ApiTranscribeRoute,
   PlayerSongIdRoute: PlayerSongIdRoute,
   ProcessingSongIdRoute: ProcessingSongIdRoute,
