@@ -1,10 +1,13 @@
 import type { Song, SongStatus, ProcessingStatus } from "@/types/song";
 import type { Lyrics } from "@/types/lyrics";
 import { transcribeSavedSong } from "@/lib/ai-transcription";
+import { alignLyricsToBeats, detectBeats } from "@/lib/beat-detection";
+import type { SyncedLyrics } from "@/types/lyrics";
 import {
   deleteSongFn,
   getSongFn,
   listSongsFn,
+  saveAlignedLyricsFn,
   setSongDurationFn,
   type LibrarySong,
 } from "@/lib/songs.functions";
@@ -128,12 +131,28 @@ export async function processSong(
 ): Promise<void> {
   const transcription = transcribeSavedSong(id, getDeviceId(), signal);
   transcription.catch(() => {});
+  // Beat detection runs in parallel with transcription; failures just skip alignment.
+  const beats = getSong(id)
+    .then((s) => (s?.audioFileUrl ? fetch(s.audioFileUrl, { signal: signal ?? null }) : null))
+    .then((r) => (r && r.ok ? r.arrayBuffer() : null))
+    .then((buf) => (buf ? detectBeats(buf) : null))
+    .catch(() => null);
+  let lyrics: SyncedLyrics | null = null;
   for (let i = 0; i < PROCESSING_STAGES.length; i++) {
     const stage = PROCESSING_STAGES[i]!;
     if (signal?.aborted) throw new DOMException("Processing cancelled", "AbortError");
     onStage?.(i, { songId: id, processingStatus: stage.status, progress: stage.progress, stage: stage.label });
-    if (stage.key === "transcribe") await transcription;
-    else await wait(stage.durationMs);
+    if (stage.key === "transcribe") lyrics = await transcription;
+    else if (stage.key === "align" && lyrics) {
+      const grid = await beats;
+      if (grid && grid.confidence > 0.05) {
+        const aligned = alignLyricsToBeats(lyrics, grid);
+        await saveAlignedLyricsFn({
+          data: { id, deviceId: getDeviceId(), lyrics: aligned, bpm: grid.bpm },
+        }).catch(() => {});
+      }
+      await wait(stage.durationMs);
+    } else await wait(stage.durationMs);
   }
 }
 

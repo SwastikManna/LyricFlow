@@ -71,3 +71,33 @@ export const deleteSongFn = createServerFn({ method: "POST" })
     await db.from("songs" as never).delete().eq("id", data.id);
     return { ok: true };
   });
+
+const WordSchema = z.object({ text: z.string().max(200), start: z.number(), end: z.number() });
+const LineSchema = z.object({
+  id: z.string().max(200),
+  text: z.string().max(2000),
+  start: z.number(),
+  end: z.number(),
+  words: z.array(WordSchema).max(200).optional(),
+});
+
+/** Saves re-aligned (beat-synced) lyrics for a song. */
+export const saveAlignedLyricsFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    SongInput.extend({
+      lyrics: z.object({ language: z.string().max(20), lines: z.array(LineSchema).max(2000) }),
+      bpm: z.number().nullable(),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { admin, getOwnedRow } = await import("./songs.server");
+    const row = await getOwnedRow(data.id, data.deviceId);
+    if (!row) throw new Error("Song not found");
+    const db = await admin();
+    const { error } = await db
+      .from("songs" as never)
+      .update({ lyrics: { ...data.lyrics, bpm: data.bpm } } as never)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
