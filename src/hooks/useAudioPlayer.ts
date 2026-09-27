@@ -114,12 +114,20 @@ export function useAudioPlayer(src: string | undefined) {
     src,
     preload: "metadata" as const,
     onLoadedMetadata: (e: React.SyntheticEvent<HTMLAudioElement>) => {
-      const el = e.currentTarget;
-      setState((s) => ({ ...s, duration: el.duration || 0, isReady: true }));
+      const d = e.currentTarget.duration;
+      setState((s) => ({ ...s, duration: Number.isFinite(d) && d > 0 ? d : s.duration, isReady: true }));
+    },
+    // Some files only report their true length after more of them loads.
+    onDurationChange: (e: React.SyntheticEvent<HTMLAudioElement>) => {
+      const d = e.currentTarget.duration;
+      if (Number.isFinite(d) && d > 0) setState((s) => (s.duration === d ? s : { ...s, duration: d }));
     },
     onPlay: () => setState((s) => ({ ...s, isPlaying: true })),
     onPause: () => setState((s) => ({ ...s, isPlaying: false })),
-    onEnded: () => setState((s) => ({ ...s, isPlaying: false })),
+    onEnded: (e: React.SyntheticEvent<HTMLAudioElement>) => {
+      emit(e.currentTarget.duration || currentTimeRef.current);
+      setState((s) => ({ ...s, isPlaying: false }));
+    },
     onSeeked: (e: React.SyntheticEvent<HTMLAudioElement>) => emit(e.currentTarget.currentTime),
     onTimeUpdate: (e: React.SyntheticEvent<HTMLAudioElement>) => {
       // Fallback clock for paused/background states.

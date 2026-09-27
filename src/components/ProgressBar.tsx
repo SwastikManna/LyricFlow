@@ -17,7 +17,8 @@ export function ProgressBar({ duration, subscribeTime, onSeek }: ProgressBarProp
     if (!draggingRef.current) setTime(t);
   }), [subscribeTime]);
 
-  const percent = duration > 0 ? Math.min(100, (time / duration) * 100) : 0;
+  const percent =
+    Number.isFinite(duration) && duration > 0 ? Math.max(0, Math.min(100, (time / duration) * 100)) : 0;
 
   const seekFromEvent = (clientX: number) => {
     const el = trackRef.current;
@@ -57,13 +58,14 @@ export function ProgressBar({ duration, subscribeTime, onSeek }: ProgressBarProp
         className="group relative flex h-6 w-full cursor-pointer touch-none items-center"
       >
         <div className="h-1 w-full overflow-hidden rounded-full bg-foreground/15">
+          {/* Driven every animation frame from the audio clock — no CSS easing, so it never lags. */}
           <div
-            className="h-full rounded-full bg-primary transition-[width] duration-100 ease-linear"
-            style={{ width: `${percent}%` }}
+            className="h-full w-full origin-left rounded-full bg-primary"
+            style={{ transform: `scaleX(${percent / 100})` }}
           />
         </div>
         <div
-          className="pointer-events-none absolute size-3 -translate-x-1/2 rounded-full bg-primary opacity-0 shadow-glow transition-opacity group-hover:opacity-100"
+          className="pointer-events-none absolute size-3 -translate-x-1/2 rounded-full bg-primary shadow-glow transition-transform group-hover:scale-125"
           style={{ left: `${percent}%` }}
         />
       </div>
