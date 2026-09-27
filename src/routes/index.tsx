@@ -67,12 +67,17 @@ function Home() {
           <AudioLines className="size-5 text-primary" />
           LyricFlow
         </span>
+        <nav className="flex items-center gap-2">
+        <Link to="/library" className="rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+          Library
+        </Link>
         <Link
           to="/upload"
           className="rounded-full border border-glass-border px-5 py-2 text-sm font-medium transition-colors hover:bg-glass"
         >
           Upload
         </Link>
+        </nav>
       </header>
 
       <section className="mx-auto grid w-full max-w-6xl gap-12 px-5 pb-24 pt-10 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-16 lg:pt-16">
@@ -126,7 +131,7 @@ function Home() {
 
       <footer className="border-t border-glass-border/60">
         <div className="mx-auto w-full max-w-6xl px-5 py-8 text-sm text-muted-foreground sm:px-8">
-          LyricFlow — your audio stays in your browser.
+          LyricFlow — your songs and lyrics are saved to your library.
         </div>
       </footer>
     </main>

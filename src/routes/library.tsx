@@ -93,7 +93,7 @@ function LibraryPage() {
                   aria-label={`Play ${song.title}`}
                 >
                   <div className="relative size-14 shrink-0 overflow-hidden rounded-xl">
-                    <AlbumArtwork song={song} />
+                    <AlbumArtwork title={song.title} className="rounded-xl border-0 shadow-none [&_svg]:size-6" />
                     <span className="absolute inset-0 flex items-center justify-center bg-background/50 opacity-0 transition-opacity group-hover:opacity-100">
                       <Play className="size-5 fill-foreground" />
                     </span>
