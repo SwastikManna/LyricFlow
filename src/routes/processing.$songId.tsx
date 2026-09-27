@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ProcessingStatus } from "@/components/ProcessingStatus";
-import { getSong, hasPlayableAudio, processSong, PROCESSING_STAGES } from "@/api/songs";
+import { getSong, processSong, PROCESSING_STAGES } from "@/api/songs";
 import type { Song } from "@/types/song";
 
 export const Route = createFileRoute("/processing/$songId")({
@@ -94,7 +94,7 @@ function ProcessingPage() {
         </h1>
         <p className="max-w-sm text-muted-foreground">
           {error ??
-            "Uploaded audio lives in this browser session only, so it's gone after a reload. Upload the track again to keep listening."}
+            "It may have been deleted, or it was uploaded from another browser."}
         </p>
         <Link
           to="/upload"
