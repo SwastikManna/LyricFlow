@@ -148,7 +148,7 @@ export function alignLyricsToBeats(lyrics: SyncedLyrics, grid: BeatGrid): Synced
 
     line.start = Number(start.toFixed(3));
     line.end = Number(end.toFixed(3));
-    line.words = orig.words?.map((w) => ({
+    if (orig.words) line.words = orig.words.map((w) => ({
       text: w.text,
       start: Number(Math.max(line.start, remap(w.start)).toFixed(3)),
       end: Number(Math.min(line.end, remap(w.end)).toFixed(3)),
