@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ProcessingStatus } from "@/components/ProcessingStatus";
-import { getSong, hasPlayableAudio, processSong, PROCESSING_STAGES } from "@/api/songs";
+import { getSong, processSong, PROCESSING_STAGES } from "@/api/songs";
 import type { Song } from "@/types/song";
 
 export const Route = createFileRoute("/processing/$songId")({
