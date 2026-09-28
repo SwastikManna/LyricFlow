@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, House } from "lucide-react";
 import { AlbumArtwork } from "./AlbumArtwork";
 import { LyricsDisplay } from "./LyricsDisplay";
 import { PlayerControls } from "./PlayerControls";
@@ -54,7 +56,24 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
     <div ref={shellRef} className="bg-stage relative flex min-h-screen flex-col bg-background">
       <audio ref={player.attach} {...player.audioProps} className="hidden" />
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-5 pb-40 pt-8 sm:px-8 lg:flex-row lg:gap-14 lg:pb-44">
+      <header className="mx-auto flex w-full max-w-6xl items-center gap-2 px-5 pt-5 sm:px-8">
+        <Link
+          to="/library"
+          className="inline-flex items-center gap-2 rounded-full border border-glass-border bg-glass px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+          Library
+        </Link>
+        <Link
+          to="/"
+          aria-label="Home"
+          className="inline-flex items-center justify-center rounded-full border border-glass-border bg-glass p-2.5 text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <House className="size-4" aria-hidden />
+        </Link>
+      </header>
+
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-5 pb-40 pt-6 sm:px-8 lg:flex-row lg:gap-14 lg:pb-44">
         {/* Artwork + metadata */}
         <aside className="lg:sticky lg:top-16 lg:h-fit lg:w-[300px] lg:shrink-0 xl:w-[340px]">
           <div className="mx-auto flex max-w-[220px] flex-col items-center gap-5 sm:max-w-[260px] lg:mx-0 lg:max-w-none lg:items-start">
