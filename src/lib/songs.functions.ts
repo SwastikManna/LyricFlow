@@ -101,3 +101,23 @@ export const saveAlignedLyricsFn = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Saves lyrics edited by hand in the editor. */
+export const saveEditedLyricsFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    SongInput.extend({
+      lyrics: z.object({ language: z.string().max(20), lines: z.array(LineSchema).max(2000) }),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { admin, getOwnedRow } = await import("./songs.server");
+    const row = await getOwnedRow(data.id, data.deviceId);
+    if (!row) throw new Error("Song not found");
+    const db = await admin();
+    const { error } = await db
+      .from("songs" as never)
+      .update({ lyrics: data.lyrics, lyrics_source: "MANUAL", processing_status: "READY", error_message: null } as never)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

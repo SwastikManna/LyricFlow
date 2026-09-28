@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { AudioLines, Play, Trash2, Plus } from "lucide-react";
+import { AudioLines, Play, Trash2, Plus, Pencil } from "lucide-react";
 import { AlbumArtwork } from "@/components/AlbumArtwork";
 import { deleteSong, listSongs } from "@/api/songs";
 import { formatTime } from "@/hooks/useAudioPlayer";
@@ -111,6 +111,16 @@ function LibraryPage() {
                 <span className="hidden w-24 text-right text-sm text-muted-foreground md:block">
                   {new Date(song.createdAt).toLocaleDateString()}
                 </span>
+                {song.processingStatus === "READY" && (
+                  <Link
+                    to="/edit/$songId"
+                    params={{ songId: song.id }}
+                    className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-glass hover:text-foreground"
+                    aria-label={`Edit lyrics for ${song.title}`}
+                  >
+                    <Pencil className="size-4" />
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={() => remove(song.id)}

@@ -14,6 +14,7 @@ import { Route as LibraryRouteImport } from './routes/library'
 import { Route as UploadRouteImport } from './routes/upload'
 import { Route as ApiSongsRouteImport } from './routes/api/songs'
 import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
+import { Route as EditSongIdRouteImport } from './routes/edit.$songId'
 import { Route as PlayerSongIdRouteImport } from './routes/player.$songId'
 import { Route as ProcessingSongIdRouteImport } from './routes/processing.$songId'
 
@@ -42,6 +43,11 @@ const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
   path: '/api/transcribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EditSongIdRoute = EditSongIdRouteImport.update({
+  id: '/edit/$songId',
+  path: '/edit/$songId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlayerSongIdRoute = PlayerSongIdRouteImport.update({
   id: '/player/$songId',
   path: '/player/$songId',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/upload': typeof UploadRoute
   '/api/songs': typeof ApiSongsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/edit/$songId': typeof EditSongIdRoute
   '/player/$songId': typeof PlayerSongIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/upload': typeof UploadRoute
   '/api/songs': typeof ApiSongsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/edit/$songId': typeof EditSongIdRoute
   '/player/$songId': typeof PlayerSongIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/upload': typeof UploadRoute
   '/api/songs': typeof ApiSongsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/edit/$songId': typeof EditSongIdRoute
   '/player/$songId': typeof PlayerSongIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/upload'
     | '/api/songs'
     | '/api/transcribe'
+    | '/edit/$songId'
     | '/player/$songId'
     | '/processing/$songId'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/upload'
     | '/api/songs'
     | '/api/transcribe'
+    | '/edit/$songId'
     | '/player/$songId'
     | '/processing/$songId'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/upload'
     | '/api/songs'
     | '/api/transcribe'
+    | '/edit/$songId'
     | '/player/$songId'
     | '/processing/$songId'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   UploadRoute: typeof UploadRoute
   ApiSongsRoute: typeof ApiSongsRoute
   ApiTranscribeRoute: typeof ApiTranscribeRoute
+  EditSongIdRoute: typeof EditSongIdRoute
   PlayerSongIdRoute: typeof PlayerSongIdRoute
   ProcessingSongIdRoute: typeof ProcessingSongIdRoute
 }
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/edit/$songId': {
+      id: '/edit/$songId'
+      path: '/edit/$songId'
+      fullPath: '/edit/$songId'
+      preLoaderRoute: typeof EditSongIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/player/$songId': {
       id: '/player/$songId'
       path: '/player/$songId'
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   UploadRoute: UploadRoute,
   ApiSongsRoute: ApiSongsRoute,
   ApiTranscribeRoute: ApiTranscribeRoute,
+  EditSongIdRoute: EditSongIdRoute,
   PlayerSongIdRoute: PlayerSongIdRoute,
   ProcessingSongIdRoute: ProcessingSongIdRoute,
 }
