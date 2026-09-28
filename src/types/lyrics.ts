@@ -12,6 +12,8 @@ export interface LyricLine {
   words?: LyricWord[];
   /** Human or AI translations, keyed by BCP-47 language code. */
   translations?: Record<string, string>;
+  /** Phonetic rendering of the same sung words in the Latin alphabet. */
+  romanization?: string;
 }
 
 export interface SyncedLyrics {

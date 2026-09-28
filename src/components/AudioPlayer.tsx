@@ -8,6 +8,7 @@ import { PlayerControls } from "./PlayerControls";
 import { ProgressBar } from "./ProgressBar";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { getDeviceId, setSongDuration } from "@/api/songs";
+import { romanizeSavedSong } from "@/lib/ai-romanization";
 import { translateSavedSong } from "@/lib/ai-translation";
 import { languageName, TRANSLATION_LANGUAGES } from "@/lib/languages";
 import type { Song } from "@/types/song";
@@ -28,6 +29,7 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
   const [translationLanguage, setTranslationLanguage] = useState("en");
   const [displayMode, setDisplayMode] = useState<LyricsDisplayMode>("dual");
   const [translationLoading, setTranslationLoading] = useState(false);
+  const [romanizationLoading, setRomanizationLoading] = useState(false);
 
   useEffect(() => setPlayerLyrics(lyrics), [lyrics]);
 
@@ -35,6 +37,7 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
   const sourceLanguage = playerLyrics?.language.split("-")[0]?.toLowerCase();
   const sameLanguage = sourceLanguage === translationLanguage.toLowerCase();
   const needsTranslation = Boolean(playerLyrics && !sameLanguage && playerLyrics.lines.some((line) => !line.translations?.[translationLanguage]?.trim()));
+  const needsRomanization = Boolean(playerLyrics?.lines.some((line) => !line.romanization?.trim()));
 
   const translateLyrics = async () => {
     if (!playerLyrics || translationLoading) return;
@@ -55,6 +58,26 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
       toast.error(error instanceof Error ? error.message : "Translation failed. Please try again.");
     } finally {
       setTranslationLoading(false);
+    }
+  };
+
+  const romanizeLyrics = async () => {
+    if (!playerLyrics || romanizationLoading) return;
+    setRomanizationLoading(true);
+    try {
+      const romanizations = await romanizeSavedSong(song.id, getDeviceId());
+      setPlayerLyrics((current) => current ? {
+        ...current,
+        lines: current.lines.map((line) => ({
+          ...line,
+          ...(romanizations[line.id] ? { romanization: romanizations[line.id] } : {}),
+        })),
+      } : current);
+      setDisplayMode((mode) => mode === "romanized" ? "romanized" : "dualRomanized");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Romanization failed. Please try again.");
+    } finally {
+      setRomanizationLoading(false);
     }
   };
 
@@ -127,6 +150,8 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
               <option value="dual">Dual · {languageName(translationLanguage)}</option>
               <option value="translated">{languageName(translationLanguage)} only</option>
               <option value="original">Original only</option>
+              <option value="dualRomanized">Original + Romanized</option>
+              <option value="romanized">Romanized only</option>
             </select>
             {needsTranslation && (
               <button
@@ -137,6 +162,17 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
               >
                 {translationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
                 {translationLoading ? "Translating…" : "Translate"}
+              </button>
+            )}
+            {needsRomanization && (
+              <button
+                type="button"
+                onClick={romanizeLyrics}
+                disabled={romanizationLoading}
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/50 bg-primary/10 px-3.5 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/20 disabled:opacity-60"
+              >
+                {romanizationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
+                {romanizationLoading ? "Writing sounds…" : "Romanize"}
               </button>
             )}
           </div>

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { LyricWord } from "./LyricWord";
 import type { LyricLine as LyricLineType } from "@/types/lyrics";
 
-export type LyricsDisplayMode = "dual" | "translated" | "original";
+export type LyricsDisplayMode = "dual" | "translated" | "original" | "dualRomanized" | "romanized";
 
 interface LyricLineProps {
   line: LyricLineType;
@@ -22,7 +22,7 @@ export function LyricLine({ line, isActive, distance, onSeek, subscribeTime, tra
   const frame = useRef(0);
 
   useEffect(() => {
-    if (!isActive || !subscribeTime || displayMode === "translated") return;
+    if (!isActive || !subscribeTime || displayMode === "translated" || displayMode === "romanized") return;
     return subscribeTime((t) => {
       // Throttle to ~20fps: karaoke reveal does not need every frame.
       frame.current = (frame.current + 1) % 3;
@@ -33,8 +33,13 @@ export function LyricLine({ line, isActive, distance, onSeek, subscribeTime, tra
   const opacity = isActive ? 1 : Math.max(0.14, 0.5 - distance * 0.09);
   const hasWords = Boolean(line.words?.length);
   const translation = line.translations?.[translationLanguage]?.trim();
-  const showTranslation = displayMode !== "original" && Boolean(translation) && translation?.toLocaleLowerCase() !== line.text.trim().toLocaleLowerCase();
-  const showOriginal = displayMode !== "translated" || !translation;
+  const romanization = line.romanization?.trim();
+  const hasRomanization = Boolean(romanization) && romanization?.toLocaleLowerCase() !== line.text.trim().toLocaleLowerCase();
+  const showTranslation = (displayMode === "dual" || displayMode === "translated") && Boolean(translation) && translation?.toLocaleLowerCase() !== line.text.trim().toLocaleLowerCase();
+  const showRomanization = (displayMode === "dualRomanized" || displayMode === "romanized") && hasRomanization;
+  const showOriginal = displayMode === "dual" || displayMode === "original" || displayMode === "dualRomanized"
+    || (displayMode === "translated" && !translation)
+    || (displayMode === "romanized" && !hasRomanization);
 
   return (
     <button
@@ -69,6 +74,11 @@ export function LyricLine({ line, isActive, distance, onSeek, subscribeTime, tra
         {showTranslation && (
           <span className={`mt-1 block animate-in fade-in-0 duration-300 font-normal leading-snug tracking-normal transition-opacity ${displayMode === "translated" ? "font-display text-[1em] text-foreground" : "font-sans text-[0.55em] text-muted-foreground"} ${isActive ? "opacity-90" : "opacity-75"}`}>
             {translation}
+          </span>
+        )}
+        {showRomanization && (
+          <span className={`mt-1 block animate-in fade-in-0 duration-300 font-normal leading-snug tracking-normal transition-opacity ${displayMode === "romanized" ? "font-display text-[1em] text-foreground" : "font-sans text-[0.55em] text-muted-foreground"} ${isActive ? "opacity-90" : "opacity-75"}`}>
+            {romanization}
           </span>
         )}
       </span>

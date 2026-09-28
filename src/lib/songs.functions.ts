@@ -84,6 +84,7 @@ const LineSchema = z.object({
   end: z.number(),
   words: z.array(WordSchema).max(200).optional(),
   translations: z.record(z.string().max(35), z.string().max(4000)).optional(),
+  romanization: z.string().max(2000).optional(),
 });
 const BeatGridSchema = z.object({
   bpm: z.number().min(30).max(300),

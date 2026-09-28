@@ -26,7 +26,7 @@ export const Route = createFileRoute("/edit/$songId")({
   notFoundComponent: () => <div className="p-10 text-center">Page not found.</div>,
 });
 
-interface Row { id: string; text: string; start: string; end: string; translations: Record<string, string> }
+interface Row { id: string; text: string; start: string; end: string; translations: Record<string, string>; romanization: string }
 
 /** Spreads words across the line, weighted by word length. */
 function resyncWords(line: LyricLine): LyricLine {
@@ -75,6 +75,7 @@ function EditPage() {
         start: x.start.toFixed(2),
         end: x.end.toFixed(2),
         translations: { ...x.translations },
+        romanization: x.romanization ?? "",
       }));
       setRows(initialRows);
       setSelectedLineId(initialRows[0]?.id ?? null);
@@ -106,7 +107,7 @@ function EditPage() {
   const addAfter = (i: number) => setRows((p) => {
     const prev = p![i];
     const s = prev ? Number(prev.end) : 0;
-    const row = { id: crypto.randomUUID(), text: "", start: s.toFixed(2), end: (s + 2).toFixed(2), translations: {} };
+    const row = { id: crypto.randomUUID(), text: "", start: s.toFixed(2), end: (s + 2).toFixed(2), translations: {}, romanization: "" };
     const next = [...p!];
     next.splice(i + 1, 0, row);
     return next;
@@ -122,7 +123,7 @@ function EditPage() {
         toast.error(`Check the times on "${r.text.slice(0, 30)}" — the end must be after the start.`);
         return;
       }
-      lines.push(resyncWords({ id: r.id, text: r.text.trim(), start, end, translations: r.translations }));
+      lines.push(resyncWords({ id: r.id, text: r.text.trim(), start, end, translations: r.translations, romanization: r.romanization.trim() }));
     }
     lines.sort((a, b) => a.start - b.start);
     setSaving(true);
@@ -167,7 +168,7 @@ function EditPage() {
       </header>
 
       <section className="mx-auto max-w-4xl px-5 pb-24 pt-6 sm:px-8">
-        <p className="text-sm text-muted-foreground">Edit lyric text, translations, or timings. Use the clock to set a time from where the song is playing; word timings are rebuilt when you save.</p>
+        <p className="text-sm text-muted-foreground">Edit lyric text, translations, romanizations, or timings. Romanization writes the same words phonetically in Latin letters. Word timings are rebuilt when you save.</p>
         {beatGrid && song && (
           <div className="mt-6">
             <BeatGridTimeline
@@ -213,6 +214,13 @@ function EditPage() {
                 <button type="button" onClick={() => addAfter(i)} aria-label="Add line below" className="p-1.5 text-muted-foreground opacity-60 hover:text-foreground group-hover:opacity-100"><Plus className="size-4" /></button>
                 <button type="button" onClick={() => setRows((p) => p!.filter((_, j) => j !== i))} aria-label="Delete line" className="p-1.5 text-muted-foreground opacity-60 hover:text-foreground group-hover:opacity-100"><Trash2 className="size-4" /></button>
               </div>
+              <input
+                aria-label="Romanized lyric line"
+                value={r.romanization}
+                onChange={(event) => update(i, { romanization: event.target.value })}
+                placeholder="Pronunciation in Latin letters (same words, not a translation)"
+                className="mt-1.5 ml-16 w-[calc(100%-4rem)] rounded-md bg-transparent px-2 py-1 text-sm text-muted-foreground outline-none placeholder:text-muted-foreground/50 focus:bg-glass focus:text-foreground"
+              />
               <input
                 aria-label={`${TRANSLATION_LANGUAGES.find((item) => item.code === translationLanguage)?.name ?? translationLanguage} translation`}
                 value={r.translations[translationLanguage] ?? ""}
