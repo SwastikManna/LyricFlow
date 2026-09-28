@@ -62,14 +62,14 @@ export function LatestSongMiniPlayer({ song }: LatestSongMiniPlayerProps) {
 
   return (
     <div className="animate-lyric-float relative w-full max-w-[480px]">
-      <div className="glass-panel relative overflow-hidden rounded-[2rem] p-5 shadow-lift sm:p-9">
+      <div className="glass-panel relative overflow-hidden rounded-[1.5rem] p-4 shadow-lift sm:rounded-[2rem] sm:p-9">
         <div className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full bg-accent/10 blur-3xl" />
         <div className="relative flex items-center justify-between gap-3 border-b border-glass-border/80 pb-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-primary"><AudioLines className="size-3.5" /></span>
             <div className="min-w-0">
               <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">Live lyrics</p>
-              <p className="mt-1 truncate text-[10px] text-muted-foreground">
+              <p className="mt-1 truncate text-[11px] text-muted-foreground sm:text-xs">
                 {song ? `${song.title} · ${song.artist}` : "Your private listening room"}
               </p>
             </div>
@@ -83,7 +83,7 @@ export function LatestSongMiniPlayer({ song }: LatestSongMiniPlayerProps) {
         {song ? (
           <>
             <div className="relative mt-3 flex items-center justify-between gap-3">
-              <span className="font-mono-ui text-[8px] uppercase tracking-[0.16em] text-muted-foreground/70">
+              <span className="font-mono-ui text-[9px] uppercase tracking-[0.12em] text-muted-foreground/70 sm:text-[10px] sm:tracking-[0.16em]">
                 {lyrics ? `${lyrics.language} · ${lines.length} lines` : song.processingStatus === "READY" ? "Lyrics unavailable" : "Lyrics are being prepared"}
               </span>
               <div className="flex rounded-full border border-glass-border bg-background/45 p-0.5" role="group" aria-label="Lyric script">
@@ -91,7 +91,7 @@ export function LatestSongMiniPlayer({ song }: LatestSongMiniPlayerProps) {
                   type="button"
                   aria-pressed={script === "original"}
                   onClick={() => setScript("original")}
-                  className={`rounded-full px-2.5 py-1.5 font-mono-ui text-[8px] uppercase tracking-[0.12em] transition-colors ${script === "original" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`rounded-full px-2 py-1.5 font-mono-ui text-[9px] uppercase tracking-[0.08em] transition-colors sm:px-2.5 sm:text-[10px] sm:tracking-[0.12em] ${script === "original" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                 >Original</button>
                 <button
                   type="button"
@@ -99,7 +99,7 @@ export function LatestSongMiniPlayer({ song }: LatestSongMiniPlayerProps) {
                   onClick={() => setScript("romanized")}
                   disabled={!hasRomanization}
                   title={hasRomanization ? "Show romanized lyrics" : "Romanized lyrics are not available yet"}
-                  className={`rounded-full px-2.5 py-1.5 font-mono-ui text-[8px] uppercase tracking-[0.12em] transition-colors disabled:cursor-not-allowed disabled:opacity-35 ${script === "romanized" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`rounded-full px-2 py-1.5 font-mono-ui text-[9px] uppercase tracking-[0.08em] transition-colors disabled:cursor-not-allowed disabled:opacity-35 sm:px-2.5 sm:text-[10px] sm:tracking-[0.12em] ${script === "romanized" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                 >Romanized</button>
               </div>
             </div>

@@ -40,7 +40,7 @@ export function LyricsDisplay({ lyrics, subscribeTime, onSeek, translationLangua
   return (
     <div
       ref={containerRef}
-      className={`fade-mask-y h-full overflow-y-auto scroll-smooth px-1 [scrollbar-width:none] sm:px-4 [&::-webkit-scrollbar]:hidden ${isFullscreen ? "py-[12vh]" : "py-[28vh]"}`}
+      className={`fade-mask-y h-full overflow-y-auto scroll-smooth px-1 [scrollbar-width:none] sm:px-4 [&::-webkit-scrollbar]:hidden ${isFullscreen ? "py-[5vh] sm:py-[8vh] lg:py-[12vh]" : "py-[12vh] sm:py-[20vh] lg:py-[28vh]"}`}
     >
       {lyrics.lines.map((line, index) => (
         <div key={line.id} ref={(el) => { lineRefs.current[index] = el; }}>

@@ -81,7 +81,7 @@ export function BeatGridTimeline({
   };
 
   return (
-    <section className="glass-panel rounded-2xl p-4 sm:p-5" aria-label="Beat grid timeline">
+    <section className="glass-panel rounded-2xl p-3 sm:p-5" aria-label="Beat grid timeline">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary"><AudioLines className="size-4" /></span>
@@ -113,7 +113,7 @@ export function BeatGridTimeline({
         <button type="button" onClick={() => { manualNavigation.current = false; setWindowStart(Math.min(maxStart, Math.max(0, currentTime - WINDOW_SECONDS / 2))); }} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-glass-border px-2 text-[10px] text-muted-foreground hover:bg-glass hover:text-foreground" aria-label="Center timeline on playback"><Crosshair className="size-3" /> Now</button>
       </div>
 
-      <div className="mt-2 overflow-x-auto pb-1">
+      <div className="mt-2 touch-pan-x overflow-x-auto overscroll-x-contain pb-1">
         <div className="min-w-[640px]">
           <div className="relative h-7 border-b border-glass-border/70">
             {ticks.map((tick) => (

@@ -141,7 +141,7 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
           <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
             <AudioLines className="size-3.5" aria-hidden /> Live lyrics
           </p>
-          <h2 className="mt-1 font-display text-xl">{isFullscreen ? "Lyric display" : "Choose how lyrics appear"}</h2>
+          <h2 className={`mt-1 font-display ${isFullscreen ? "text-base sm:text-lg" : "text-xl"}`}>{isFullscreen ? "Lyric display" : "Choose how lyrics appear"}</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             {isFullscreen ? "Choose the script and subtitle language." : "Keep the original script or read the same words phonetically."}
           </p>
@@ -167,14 +167,14 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
         )}
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2.5" role="group" aria-label="Lyric script">
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2" role="group" aria-label="Lyric script">
         <button
           type="button"
           aria-pressed={scriptMode === "original"}
           onClick={() => setScriptMode("original")}
           className={`rounded-2xl border text-left transition-all duration-200 ${isFullscreen ? "p-2.5" : "p-3 sm:p-4"} ${scriptMode === "original" ? "border-primary/55 bg-primary/[0.09] shadow-glow" : "border-glass-border bg-glass/50 hover:border-primary/30 hover:bg-glass"}`}
         >
-          <span className="flex items-center gap-2 font-display text-base sm:text-lg"><AudioLines className="size-4 text-primary" aria-hidden /> Original script</span>
+          <span className={`flex items-center gap-2 font-display ${isFullscreen ? "text-sm lg:text-base" : "text-base sm:text-lg"}`}><AudioLines className="size-4 text-primary" aria-hidden /> Original script</span>
           {!isFullscreen && <span className="mt-1 block pl-6 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">As written in the song’s language</span>}
         </button>
         <button
@@ -183,12 +183,12 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
           onClick={() => setScriptMode("romanized")}
           className={`rounded-2xl border text-left transition-all duration-200 ${isFullscreen ? "p-2.5" : "p-3 sm:p-4"} ${scriptMode === "romanized" ? "border-primary/55 bg-primary/[0.09] shadow-glow" : "border-glass-border bg-glass/50 hover:border-primary/30 hover:bg-glass"}`}
         >
-          <span className="flex items-center gap-2 font-display text-base sm:text-lg"><Languages className="size-4 text-primary" aria-hidden /> Romanized</span>
+          <span className={`flex items-center gap-2 font-display ${isFullscreen ? "text-sm lg:text-base" : "text-base sm:text-lg"}`}><Languages className="size-4 text-primary" aria-hidden /> Romanized</span>
           {!isFullscreen && <span className="mt-1 block pl-6 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">Same words, written by sound</span>}
         </button>
       </div>
 
-      <div className={`mt-3 grid gap-2.5 ${isFullscreen ? "grid-cols-2" : "sm:grid-cols-2"}`}>
+      <div className={`mt-3 grid gap-2.5 ${isFullscreen ? "grid-cols-1 lg:grid-cols-2" : "sm:grid-cols-2"}`}>
         <div className="rounded-2xl border border-glass-border/70 bg-background/35 p-2.5">
           <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Translation language</span>
           <Select value={translationLanguage} onValueChange={setTranslationLanguage}>
@@ -235,10 +235,10 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
   );
 
   return (
-    <div ref={shellRef} className={`bg-stage relative flex flex-col bg-background ${isFullscreen ? "h-screen min-h-0 overflow-hidden" : "min-h-screen"}`}>
+    <div ref={shellRef} className={`bg-stage relative flex flex-col bg-background ${isFullscreen ? "h-dvh min-h-0 overflow-hidden" : "min-h-screen"}`}>
       <audio ref={player.attach} {...player.audioProps} className="hidden" />
 
-      <header className={`mx-auto flex w-full items-center gap-2 px-5 pt-5 sm:px-8 ${isFullscreen ? "max-w-[1600px] flex-none pt-3" : "max-w-6xl"}`}>
+      <header className={`mx-auto flex w-full items-center gap-2 px-4 pt-4 sm:px-8 sm:pt-5 ${isFullscreen ? "max-w-[1600px] flex-none pt-3 sm:pt-3" : "max-w-6xl"}`}>
         <Link
           to="/library"
           className="inline-flex items-center gap-2 rounded-full border border-glass-border bg-glass px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -255,10 +255,21 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
         </Link>
       </header>
 
-      <div className={`mx-auto flex w-full flex-1 px-5 sm:px-8 ${isFullscreen ? "min-h-0 max-w-[1600px] flex-col gap-4 overflow-hidden pb-32 pt-4 md:flex-row md:gap-5" : "max-w-6xl flex-col gap-6 pb-40 pt-6 lg:flex-row lg:gap-14 lg:pb-44"}`}>
+      <div className={`mx-auto flex w-full flex-1 px-4 sm:px-8 ${isFullscreen ? "min-h-0 max-w-[1600px] flex-col gap-3 overflow-hidden pb-32 pt-3 md:flex-row md:gap-4 lg:gap-5" : "max-w-6xl flex-col gap-5 pb-32 pt-4 sm:gap-6 sm:pb-40 sm:pt-6 lg:flex-row lg:gap-14 lg:pb-44"}`}>
         {/* Artwork + metadata */}
-        <aside className={isFullscreen ? "flex min-h-0 w-full shrink-0 flex-col gap-3 overflow-y-auto pr-1 md:w-[320px] lg:w-[360px]" : "lg:sticky lg:top-16 lg:h-fit lg:w-[300px] lg:shrink-0 xl:w-[340px]"}>
-          <div className={isFullscreen ? "mx-auto flex w-full max-w-[160px] flex-col items-center gap-2.5 sm:max-w-[180px] md:mx-0 md:max-w-[180px] md:items-start lg:max-w-[200px]" : "mx-auto flex max-w-[220px] flex-col items-center gap-5 sm:max-w-[260px] lg:mx-0 lg:max-w-none lg:items-start"}>
+        <aside className={isFullscreen ? "flex min-h-0 w-full shrink-0 flex-col gap-3 overflow-y-auto pr-1 md:w-[280px] lg:w-[360px]" : "lg:sticky lg:top-16 lg:h-fit lg:w-[300px] lg:shrink-0 xl:w-[340px]"}>
+          {isFullscreen && (
+            <div className="flex items-center gap-3 lg:hidden">
+              <div className="size-11 shrink-0 overflow-hidden rounded-xl sm:size-12">
+                <AlbumArtwork title={song.title} coverImageUrl={song.coverImageUrl} isPlaying={player.isPlaying} className="rounded-xl border-0 shadow-none [&_svg]:size-6" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="truncate font-display text-base font-semibold sm:text-lg">{song.title}</h1>
+                <p className="truncate text-xs text-muted-foreground sm:text-sm">{song.artist} · {playerLyrics?.language ?? "Instrumental"}</p>
+              </div>
+            </div>
+          )}
+          <div className={isFullscreen ? "mx-auto hidden w-full max-w-[200px] flex-col items-center gap-2.5 lg:mx-0 lg:flex lg:items-start" : "mx-auto flex max-w-[220px] flex-col items-center gap-5 sm:max-w-[260px] lg:mx-0 lg:max-w-none lg:items-start"}>
             <AlbumArtwork
               title={song.title}
               coverImageUrl={song.coverImageUrl}
@@ -277,7 +288,7 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
         </aside>
 
         {/* Live lyrics */}
-        <section className={`flex flex-1 flex-col gap-3 ${isFullscreen ? "min-h-0 md:h-full" : "min-h-[62vh] lg:h-[calc(100vh-13rem)] lg:min-h-[520px]"}`} aria-label="Synchronized lyrics">
+        <section className={`flex flex-1 flex-col gap-3 ${isFullscreen ? "min-h-0 md:h-full" : "min-h-[55vh] lg:h-[calc(100vh-13rem)] lg:min-h-[520px]"}`} aria-label="Synchronized lyrics">
           {!isFullscreen && lyricsControls}
 
           <div className={`relative flex-1 overflow-hidden rounded-3xl border border-glass-border/80 bg-foreground/[0.035] shadow-lift backdrop-blur-2xl ${isFullscreen ? "min-h-0" : "min-h-[40vh] lg:min-h-0"}`}>

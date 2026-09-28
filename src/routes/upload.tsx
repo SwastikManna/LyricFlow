@@ -59,22 +59,22 @@ function UploadPage() {
 
   return (
     <main className="grain bg-stage min-h-screen bg-background">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-        <Link to="/" className="inline-flex items-center gap-2 font-display text-sm font-semibold tracking-tight">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-8 sm:py-5">
+        <Link to="/" className="inline-flex shrink-0 items-center gap-2 font-display text-sm font-semibold tracking-tight">
           <span className="inline-flex size-7 items-center justify-center rounded-full border border-primary/40 text-primary"><AudioLines className="size-3.5" /></span>
           Lyric<span className="text-primary">Flow</span>
         </Link>
-        <Link to="/library" className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground">Library</Link>
+        <Link to="/library" className="rounded-full px-2 py-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground sm:px-3 sm:text-[10px] sm:tracking-[0.18em]">Library</Link>
       </header>
 
-      <section className="mx-auto grid min-h-[calc(100vh-4.5rem)] w-full max-w-5xl items-center gap-10 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+      <section className="mx-auto grid w-full max-w-5xl items-center gap-8 px-4 pb-12 pt-6 sm:min-h-[calc(100vh-4.5rem)] sm:gap-10 sm:px-8 sm:pb-16 sm:pt-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
         <div className="animate-rise-in lg:pl-8">
           <Link to="/" className="inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-primary"><ArrowLeft className="size-3" /> Back to room</Link>
-          <p className="mt-9 text-[9px] font-bold uppercase tracking-[0.24em] text-primary">01 / Bring a song</p>
-          <h1 className="mt-4 max-w-xs font-display text-5xl leading-[0.86] tracking-[-0.055em] sm:text-6xl">
+          <p className="mt-7 text-[9px] font-bold uppercase tracking-[0.24em] text-primary sm:mt-9">01 / Bring a song</p>
+          <h1 className="mt-3 max-w-xs font-display text-[2.75rem] leading-[0.9] tracking-[-0.055em] sm:mt-4 sm:text-6xl">
             Start<br />with<br /><span className="font-display italic tracking-[-0.06em] text-primary">sound.</span>
           </h1>
-          <p className="mt-5 max-w-xs text-xs leading-6 text-muted-foreground">We’ll map the feeling in your track, then give every word a moment to arrive.</p>
+          <p className="mt-4 max-w-xs text-xs leading-5 text-muted-foreground sm:mt-5 sm:text-sm sm:leading-6">We’ll map the feeling in your track, then give every word a moment to arrive.</p>
         </div>
 
         <div className="w-full max-w-xl justify-self-center">

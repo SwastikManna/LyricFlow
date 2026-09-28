@@ -42,7 +42,7 @@ export function PlayerControls({
   const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex items-center justify-between gap-2 sm:gap-4">
       <div className="hidden w-32 items-center gap-2 sm:flex">
         <button type="button" className={iconButton} onClick={onToggleMute} aria-label="Mute">
           <VolumeIcon className="size-5" />
@@ -59,7 +59,7 @@ export function PlayerControls({
         />
       </div>
 
-      <div className="flex flex-1 items-center justify-center gap-3 sm:gap-5">
+      <div className="flex flex-1 items-center justify-center gap-2 sm:gap-5">
         <button type="button" className={iconButton} onClick={onPrevious} aria-label="Previous">
           <SkipBack className="size-5" />
         </button>
@@ -68,19 +68,19 @@ export function PlayerControls({
           onClick={onToggle}
           aria-label={isPlaying ? "Pause" : "Play"}
           className={cn(
-            "inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground",
+            "inline-flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground sm:size-14",
             "shadow-glow transition-transform hover:scale-105 active:scale-95",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70",
           )}
         >
-          {isPlaying ? <Pause className="size-6" /> : <Play className="ml-0.5 size-6" />}
+          {isPlaying ? <Pause className="size-5 sm:size-6" /> : <Play className="ml-0.5 size-5 sm:size-6" />}
         </button>
         <button type="button" className={iconButton} onClick={onNext} aria-label="Next">
           <SkipForward className="size-5" />
         </button>
       </div>
 
-      <div className="flex w-32 justify-end">
+      <div className="flex w-auto justify-end sm:w-32">
         <button
           type="button"
           className={iconButton}

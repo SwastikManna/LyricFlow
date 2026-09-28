@@ -47,7 +47,7 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
           compact
             ? "rounded-xl border-dashed border-primary/40 bg-card/40"
             : "rounded-3xl",
-          compact ? "px-6 py-10" : "px-6 py-16 sm:py-24",
+          compact ? "px-4 py-8 sm:px-6 sm:py-10" : "px-5 py-12 sm:px-6 sm:py-24",
           !file && "cursor-pointer hover:border-primary/50",
           isOver && "border-primary/70 bg-primary/10 scale-[1.01]",
         )}
@@ -66,7 +66,7 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
               <span className="absolute inset-0 rounded-full bg-primary/25 animate-pulse-ring" />
               <UploadCloud className={compact ? "size-5" : "size-7"} />
             </span>
-            <p className={cn("font-display font-semibold", compact ? "text-lg" : "text-2xl")}>
+            <p className={cn("font-display font-semibold", compact ? "text-base sm:text-lg" : "text-xl sm:text-2xl")}>
               Drop your track here
             </p>
             <p className={cn("text-muted-foreground", compact ? "mt-1 text-xs" : "mt-2 text-sm")}>

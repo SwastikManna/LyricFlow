@@ -54,30 +54,30 @@ function LibraryPage() {
 
   return (
     <main className="bg-stage min-h-screen bg-background">
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-6 sm:px-8">
-        <Link to="/" className="inline-flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
-          <AudioLines className="size-5 text-primary" />
+      <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-4 sm:px-8 sm:py-6">
+        <Link to="/" className="inline-flex shrink-0 items-center gap-2 font-display text-base font-semibold tracking-tight sm:text-lg">
+          <AudioLines className="size-5 shrink-0 text-primary" />
           LyricFlow
         </Link>
         <Link
           to="/upload"
-          className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground shadow-glow"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-glow sm:px-5 sm:text-sm"
         >
           <Plus className="size-4" /> Upload
         </Link>
       </header>
 
-      <section className="mx-auto w-full max-w-5xl px-5 pb-24 pt-6 sm:px-8">
-        <h1 className="font-display text-3xl font-semibold sm:text-4xl">Your library</h1>
-        <p className="mt-2 text-muted-foreground">Songs saved in this browser.</p>
+      <section className="mx-auto w-full max-w-5xl px-4 pb-16 pt-5 sm:px-8 sm:pb-24 sm:pt-6">
+        <h1 className="font-display text-2xl font-semibold sm:text-4xl">Your library</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2 sm:text-base">Songs saved in this browser.</p>
 
         {error && <p className="mt-10 text-muted-foreground">{error}</p>}
         {!songs && !error && <p className="mt-10 text-muted-foreground">Loading…</p>}
 
         {songs && songs.length === 0 && (
-          <div className="mt-16 flex flex-col items-center text-center">
-            <p className="font-display text-xl">No songs yet</p>
-            <p className="mt-2 max-w-sm text-muted-foreground">Upload a track and it will appear here with its lyrics.</p>
+          <div className="mt-12 flex flex-col items-center text-center sm:mt-16">
+            <p className="font-display text-lg sm:text-xl">No songs yet</p>
+            <p className="mt-2 max-w-sm text-sm text-muted-foreground sm:text-base">Upload a track and it will appear here with its lyrics.</p>
             <Link to="/upload" className="mt-6 rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground shadow-glow">
               Upload a song
             </Link>
@@ -85,24 +85,24 @@ function LibraryPage() {
         )}
 
         {songs && songs.length > 0 && (
-          <ul className="mt-10 divide-y divide-glass-border/60">
+          <ul className="mt-6 divide-y divide-glass-border/60 sm:mt-10">
             {songs.map((song) => (
-              <li key={song.id} className="group flex items-center gap-4 py-4">
+              <li key={song.id} className="group flex min-w-0 items-center gap-2 py-3 sm:gap-4 sm:py-4">
                 <button
                   type="button"
                   onClick={() => open(song)}
-                  className="flex min-w-0 flex-1 items-center gap-4 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 text-left sm:gap-4"
                   aria-label={`Play ${song.title}`}
                 >
-                  <div className="relative size-14 shrink-0 overflow-hidden rounded-xl">
+                  <div className="relative size-12 shrink-0 overflow-hidden rounded-xl sm:size-14">
                     <AlbumArtwork title={song.title} className="rounded-xl border-0 shadow-none [&_svg]:size-6" />
                     <span className="absolute inset-0 flex items-center justify-center bg-background/50 opacity-0 transition-opacity group-hover:opacity-100">
                       <Play className="size-5 fill-foreground" />
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate font-display text-lg font-medium">{song.title}</p>
-                    <p className="truncate text-sm text-muted-foreground">
+                    <p className="truncate font-display text-base font-medium sm:text-lg">{song.title}</p>
+                    <p className="truncate text-xs text-muted-foreground sm:text-sm">
                       {song.artist} · {statusLabel(song)}
                     </p>
                   </div>
@@ -117,7 +117,7 @@ function LibraryPage() {
                   <Link
                     to="/edit/$songId"
                     params={{ songId: song.id }}
-                    className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-glass hover:text-foreground"
+                    className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-glass hover:text-foreground sm:size-10"
                     aria-label={`Open beat grid and edit lyrics for ${song.title}`}
                     title={song.bpm ? `Beat grid · ${song.bpm} BPM` : "Open beat grid"}
                   >
@@ -127,7 +127,7 @@ function LibraryPage() {
                 <button
                   type="button"
                   onClick={() => remove(song.id)}
-                  className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-glass hover:text-foreground"
+                  className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-glass hover:text-foreground sm:size-10"
                   aria-label={`Delete ${song.title}`}
                 >
                   <Trash2 className="size-4" />

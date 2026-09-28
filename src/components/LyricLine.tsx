@@ -52,7 +52,7 @@ export function LyricLine({ line, wordTimingsReliable, isFullscreen, isActive, d
       aria-current={isActive ? "true" : undefined}
       className={cn(
         "block w-full cursor-pointer text-balance px-1 py-3 text-left font-display leading-tight",
-        isFullscreen ? "text-xl transition-all duration-500 ease-out sm:text-2xl md:text-3xl lg:text-[2.25rem]" : "text-2xl transition-all duration-500 ease-out sm:text-3xl md:text-4xl lg:text-[2.75rem]",
+        isFullscreen ? "text-lg transition-all duration-500 ease-out sm:text-xl md:text-2xl lg:text-[2.25rem]" : "text-xl transition-all duration-500 ease-out sm:text-2xl md:text-4xl lg:text-[2.75rem]",
         "hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-0",
         isActive ? "scale-[1.02] font-semibold" : "font-medium blur-[0.3px]",
       )}

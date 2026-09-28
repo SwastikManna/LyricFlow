@@ -11,19 +11,19 @@ interface ProcessingStatusProps {
 export function ProcessingStatus({ currentStage, progress }: ProcessingStatusProps) {
   return (
     <div className="w-full max-w-md">
-      <div className="mb-10">
+      <div className="mb-8 sm:mb-10">
         <div className="h-1 w-full overflow-hidden rounded-full bg-foreground/15">
           <div
             className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="mt-3 text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
+        <p className="mt-3 text-center text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:text-xs sm:tracking-[0.3em]">
           {progress}% complete
         </p>
       </div>
 
-      <ul className="space-y-4">
+      <ul className="space-y-3 sm:space-y-4">
         {PROCESSING_STAGES.map((stage, index) => {
           const done = index < currentStage;
           const active = index === currentStage;
@@ -32,7 +32,7 @@ export function ProcessingStatus({ currentStage, progress }: ProcessingStatusPro
             <li
               key={stage.key}
               className={cn(
-                "flex items-center gap-3 text-base transition-all duration-500",
+                "flex items-center gap-2.5 text-sm transition-all duration-500 sm:gap-3 sm:text-base",
                 done && "text-foreground/70",
                 active && "text-foreground",
                 !done && !active && "text-muted-foreground/50",
