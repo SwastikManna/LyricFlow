@@ -8,6 +8,7 @@ import { PlayerControls } from "./PlayerControls";
 import { ProgressBar } from "./ProgressBar";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { getDeviceId, setSongDuration } from "@/api/songs";
+import { alignSavedSong } from "@/lib/ai-transcription";
 import { romanizeSavedSong } from "@/lib/ai-romanization";
 import { translateSavedSong } from "@/lib/ai-translation";
 import { languageName, TRANSLATION_LANGUAGES } from "@/lib/languages";
@@ -32,6 +33,7 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
   const [translationDisplay, setTranslationDisplay] = useState<TranslationDisplayMode>("dual");
   const [translationLoading, setTranslationLoading] = useState(false);
   const [romanizationLoading, setRomanizationLoading] = useState(false);
+  const [wordAlignmentLoading, setWordAlignmentLoading] = useState(false);
 
   useEffect(() => setPlayerLyrics(lyrics), [lyrics]);
 
@@ -40,6 +42,26 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
   const sameLanguage = sourceLanguage === translationLanguage.toLowerCase();
   const needsTranslation = Boolean(playerLyrics && !sameLanguage && playerLyrics.lines.some((line) => !line.translations?.[translationLanguage]?.trim()));
   const needsRomanization = Boolean(playerLyrics?.lines.some((line) => !line.romanization?.trim()));
+  const needsWordAlignment = Boolean(playerLyrics?.lines.length && playerLyrics.wordTimingSource !== "audio-aligned");
+
+  const alignWordTimings = async () => {
+    if (!playerLyrics || wordAlignmentLoading) return;
+    setWordAlignmentLoading(true);
+    try {
+      const result = await alignSavedSong(song.id, getDeviceId());
+      setPlayerLyrics(result.lyrics);
+      if (result.aligned) toast.success("Word timings aligned to the recording.");
+      else if (result.reason === "not_configured") {
+        toast.error("Word alignment isn't set up yet. Add ELEVENLABS_API_KEY to the app's server secrets.");
+      } else {
+        toast.error("The words couldn't be matched to this recording. Check the lyrics and try again.");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Word alignment failed. Please try again.");
+    } finally {
+      setWordAlignmentLoading(false);
+    }
+  };
 
   const translateLyrics = async () => {
     if (!playerLyrics || translationLoading) return;
@@ -168,6 +190,22 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
                 <span className="rounded-full border border-glass-border bg-glass px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
                   {languageName(playerLyrics.language.split("-")[0] ?? playerLyrics.language)} · {playerLyrics.lines.length} lines
                 </span>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-glass-border/60 pt-3">
+                <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground" title="Only audio-aligned timings are used for word-by-word highlighting.">
+                  {playerLyrics.wordTimingSource === "audio-aligned" ? "Word timing · audio aligned" : "Line timing · word sync unavailable"}
+                </span>
+                {needsWordAlignment && (
+                  <button
+                    type="button"
+                    onClick={alignWordTimings}
+                    disabled={wordAlignmentLoading}
+                    className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/[0.08] px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.15] disabled:opacity-60"
+                  >
+                    {wordAlignmentLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <AudioLines className="size-3.5" aria-hidden />}
+                    {wordAlignmentLoading ? "Aligning words…" : "Align words to audio"}
+                  </button>
+                )}
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-2.5" role="group" aria-label="Lyric script">

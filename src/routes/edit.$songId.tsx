@@ -14,9 +14,9 @@ export const Route = createFileRoute("/edit/$songId")({
   head: () => ({
     meta: [
       { title: "Edit lyrics — LyricFlow" },
-      { name: "description", content: "Fix lyric lines and timings, then re-sync word timings automatically." },
+      { name: "description", content: "Fix lyric lines and timings, then align each word to the recording." },
       { property: "og:title", content: "Edit lyrics — LyricFlow" },
-      { property: "og:description", content: "Tweak lyrics line by line and re-sync the words." },
+      { property: "og:description", content: "Tweak lyric text and align the words to the recording." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -27,23 +27,6 @@ export const Route = createFileRoute("/edit/$songId")({
 });
 
 interface Row { id: string; text: string; start: string; end: string; translations: Record<string, string>; romanization: string }
-
-/** Spreads words across the line, weighted by word length. */
-function resyncWords(line: LyricLine): LyricLine {
-  const words = line.text.split(/\s+/).filter(Boolean);
-  const total = words.reduce((s, w) => s + w.length + 1, 0) || 1;
-  const span = line.end - line.start;
-  let t = line.start;
-  return {
-    ...line,
-    words: words.map((w) => {
-      const d = (span * (w.length + 1)) / total;
-      const out = { text: w, start: Number(t.toFixed(3)), end: Number((t + d).toFixed(3)) };
-      t += d;
-      return out;
-    }),
-  };
-}
 
 function EditPage() {
   const { songId } = Route.useParams();
@@ -123,12 +106,12 @@ function EditPage() {
         toast.error(`Check the times on "${r.text.slice(0, 30)}" — the end must be after the start.`);
         return;
       }
-      lines.push(resyncWords({ id: r.id, text: r.text.trim(), start, end, translations: r.translations, romanization: r.romanization.trim() }));
+      lines.push({ id: r.id, text: r.text.trim(), start, end, translations: r.translations, romanization: r.romanization.trim() });
     }
     lines.sort((a, b) => a.start - b.start);
     setSaving(true);
     try {
-      let lyrics: SyncedLyrics = { language, lines, ...(beatGrid ? { beatGrid } : {}) };
+      let lyrics: SyncedLyrics = { language, lines, wordTimingSource: "line-only", ...(beatGrid ? { beatGrid } : {}) };
       if (beatSnap && beatGrid && beatGrid.confidence > 0.05) {
         lyrics = alignLyricsToBeats(lyrics, beatGrid);
       }
@@ -157,7 +140,7 @@ function EditPage() {
             Snap to beat
           </label>
           <button type="button" onClick={save} disabled={saving || !rows} className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground shadow-glow disabled:opacity-50">
-            {saving ? "Syncing…" : "Save & re-sync"}
+            {saving ? "Saving…" : "Save changes"}
           </button>
         </div>
         {song?.audioFileUrl && (
@@ -168,7 +151,7 @@ function EditPage() {
       </header>
 
       <section className="mx-auto max-w-4xl px-5 pb-24 pt-6 sm:px-8">
-        <p className="text-sm text-muted-foreground">Edit lyric text, translations, romanizations, or timings. Romanization writes the same words phonetically in Latin letters. Word timings are rebuilt when you save.</p>
+        <p className="text-sm text-muted-foreground">Edit lyric text, translations, romanizations, or timings. Romanization writes the same words phonetically in Latin letters. Save your changes, then align the words to the recording from the player.</p>
         {beatGrid && song && (
           <div className="mt-6">
             <BeatGridTimeline

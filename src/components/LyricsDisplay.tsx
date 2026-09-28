@@ -45,6 +45,7 @@ export function LyricsDisplay({ lyrics, subscribeTime, onSeek, translationLangua
         <div key={line.id} ref={(el) => { lineRefs.current[index] = el; }}>
           <LyricLine
             line={line}
+            wordTimingsReliable={lyrics.wordTimingSource === "audio-aligned"}
             isActive={index === activeIndex}
             translationLanguage={translationLanguage}
             scriptMode={scriptMode}

@@ -94,6 +94,7 @@ const BeatGridSchema = z.object({
 const LyricsSchema = z.object({
   language: z.string().max(20),
   lines: z.array(LineSchema).max(2000),
+  wordTimingSource: z.enum(["audio-aligned", "line-only"]).optional(),
   beatGrid: BeatGridSchema.optional(),
 });
 

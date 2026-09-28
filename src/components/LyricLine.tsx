@@ -8,6 +8,7 @@ export type TranslationDisplayMode = "dual" | "translated" | "hidden";
 
 interface LyricLineProps {
   line: LyricLineType;
+  wordTimingsReliable: boolean;
   isActive: boolean;
   translationLanguage: string;
   scriptMode: LyricsScriptMode;
@@ -19,7 +20,7 @@ interface LyricLineProps {
   subscribeTime?: ((listener: (time: number) => void) => () => void) | undefined;
 }
 
-export function LyricLine({ line, isActive, distance, onSeek, subscribeTime, translationLanguage, scriptMode, translationDisplay }: LyricLineProps) {
+export function LyricLine({ line, wordTimingsReliable, isActive, distance, onSeek, subscribeTime, translationLanguage, scriptMode, translationDisplay }: LyricLineProps) {
   const [time, setTime] = useState(line.start);
   const frame = useRef(0);
 
@@ -33,7 +34,7 @@ export function LyricLine({ line, isActive, distance, onSeek, subscribeTime, tra
   }, [isActive, subscribeTime]);
 
   const opacity = isActive ? 1 : Math.max(0.14, 0.5 - distance * 0.09);
-  const hasWords = Boolean(line.words?.length);
+  const hasWords = wordTimingsReliable && Boolean(line.words?.length);
   const translation = line.translations?.[translationLanguage]?.trim();
   const romanization = line.romanization?.trim();
   const sourceText = scriptMode === "romanized" && romanization ? romanization : line.text;
@@ -70,6 +71,21 @@ export function LyricLine({ line, isActive, distance, onSeek, subscribeTime, tra
               );
             })}
           </span>
+        ) : isActive && primaryIsRomanized && wordTimingsReliable && line.words?.length && primaryText.split(/\s+/u).length === line.words.length ? (
+          <span>
+            {primaryText.split(/\s+/u).map((word, i) => {
+              const timing = line.words![i]!;
+              return (
+                <LyricWord
+                  key={`${line.id}-romanized-w${i}`}
+                  word={{ ...timing, text: word }}
+                  progress={(time - timing.start) / Math.max(0.001, timing.end - timing.start)}
+                />
+              );
+            })}
+          </span>
+        ) : isActive && primaryIsRomanized && wordTimingsReliable ? (
+          <span className="text-foreground">{primaryText}</span>
         ) : isActive && primaryIsRomanized ? (
           <LyricWord
             word={{ text: primaryText, start: line.start, end: line.end }}

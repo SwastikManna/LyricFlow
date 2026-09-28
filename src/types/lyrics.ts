@@ -19,6 +19,8 @@ export interface LyricLine {
 export interface SyncedLyrics {
   language: string;
   lines: LyricLine[];
+  /** Only forced audio alignment is trusted for word-by-word karaoke highlighting. */
+  wordTimingSource?: "audio-aligned" | "line-only";
   beatGrid?: {
     bpm: number;
     beats: number[];

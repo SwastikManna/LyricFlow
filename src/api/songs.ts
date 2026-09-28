@@ -1,6 +1,6 @@
 import type { Song, SongStatus, ProcessingStatus } from "@/types/song";
 import type { Lyrics } from "@/types/lyrics";
-import { transcribeSavedSong } from "@/lib/ai-transcription";
+import { alignSavedSong, transcribeSavedSong } from "@/lib/ai-transcription";
 import { romanizeSavedSong } from "@/lib/ai-romanization";
 import { alignLyricsToBeats, detectBeats } from "@/lib/beat-detection";
 import type { SyncedLyrics } from "@/types/lyrics";
@@ -118,10 +118,11 @@ export interface ProcessingStage {
 export const PROCESSING_STAGES: ProcessingStage[] = [
   { key: "upload", label: "Uploading audio", doneLabel: "Audio uploaded", status: "UPLOADED", progress: 12, durationMs: 500 },
   { key: "inspect", label: "Reading audio", doneLabel: "Audio ready", status: "PROCESSING", progress: 24, durationMs: 300 },
-  { key: "transcribe", label: "Transcribing with AI", doneLabel: "Lyrics timestamped", status: "TRANSCRIBING", progress: 68, durationMs: 0 },
-  { key: "romanize", label: "Writing phonetic lyrics", doneLabel: "Romanized lyrics ready", status: "PROCESSING", progress: 77, durationMs: 0 },
-  { key: "beat", label: "Tracking the beat", doneLabel: "Beat grid detected", status: "PROCESSING", progress: 85, durationMs: 0 },
-  { key: "align", label: "Aligning lyrics to the song", doneLabel: "Lyrics synchronized", status: "ALIGNING", progress: 94, durationMs: 0 },
+  { key: "transcribe", label: "Transcribing lyrics", doneLabel: "Lyrics transcribed", status: "TRANSCRIBING", progress: 58, durationMs: 0 },
+  { key: "romanize", label: "Writing phonetic lyrics", doneLabel: "Romanized lyrics ready", status: "PROCESSING", progress: 70, durationMs: 0 },
+  { key: "word-align", label: "Aligning words to the recording", doneLabel: "Timing step complete", status: "ALIGNING", progress: 79, durationMs: 0 },
+  { key: "beat", label: "Tracking the beat", doneLabel: "Beat grid detected", status: "PROCESSING", progress: 87, durationMs: 0 },
+  { key: "align", label: "Syncing the lyric lines", doneLabel: "Lyrics synchronized", status: "ALIGNING", progress: 95, durationMs: 0 },
   { key: "finalize", label: "Finalizing", doneLabel: "Ready to play", status: "READY", progress: 100, durationMs: 300 },
 ];
 
@@ -158,10 +159,17 @@ export async function processSong(
         };
       }
     }
+    else if (stage.key === "word-align" && lyrics) {
+      const result = await alignSavedSong(id, getDeviceId(), signal).catch(() => null);
+      if (result) lyrics = result.lyrics;
+    }
     else if (stage.key === "beat") grid = await beats;
     else if (stage.key === "align" && lyrics) {
       if (grid && grid.confidence > 0.05) {
-        const aligned = alignLyricsToBeats(lyrics, grid);
+        // Beat snapping must not overwrite word boundaries measured from audio.
+        const aligned = lyrics.wordTimingSource === "audio-aligned"
+          ? { ...lyrics, beatGrid: grid }
+          : alignLyricsToBeats(lyrics, grid);
         await saveAlignedLyricsFn({
           data: {
             id,

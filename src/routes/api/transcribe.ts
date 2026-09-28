@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { normalizeLyrics } from "@/lib/ai-transcription";
+import { forceAlignLyricsToAudio } from "@/lib/forced-alignment";
+import type { SyncedLyrics } from "@/types/lyrics";
 
 const MAX_BYTES = 20 * 1024 * 1024;
 const MODEL = "google/gemini-3.8-flash";
@@ -14,11 +16,11 @@ const FORMATS: Record<string, string> = {
 const PROMPT = `You are a lyrics transcription and alignment engine.
 Listen to this song and transcribe ONLY the sung/spoken vocals as lyrics.
 Split into natural lyric lines (roughly 3-12 words each).
-For every line give start and end time in seconds from the start of the audio, and for every word its start and end time in seconds.
-Timestamps must be accurate to the audio, increasing, and never overlap between lines.
+For every line give an approximate start and end time in seconds from the start of the audio.
+Do not invent word-level timestamps; a separate audio alignment step will locate each word.
 If there are no vocals, return an empty lines array.
 Respond with ONLY JSON, no markdown, in this exact shape:
-{"language":"<BCP-47 code>","lines":[{"text":"...","start":0.0,"end":0.0,"words":[{"text":"...","start":0.0,"end":0.0}]}]}`;
+{"language":"<BCP-47 code>","lines":[{"text":"...","start":0.0,"end":0.0}]}`;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -27,17 +29,82 @@ function json(body: unknown, status = 200) {
   });
 }
 
+async function alignSavedLyrics(id: string, deviceId: string, request: Request) {
+  const { admin, getOwnedRow, BUCKET } = await import("@/lib/songs.server");
+  const row = await getOwnedRow(id, deviceId);
+  if (!row) return json({ error: "Song not found." }, 404);
+  const saved = row.lyrics as SyncedLyrics | null;
+  if (!saved || !Array.isArray(saved.lines) || saved.lines.length === 0) {
+    return json({ error: "This song has no lyrics to align." }, 422);
+  }
+
+  const db = await admin();
+  const lineOnly: SyncedLyrics = {
+    ...saved,
+    wordTimingSource: "line-only",
+    lines: saved.lines.map((line) => {
+      const copy = { ...line };
+      delete copy.words;
+      return copy;
+    }),
+  };
+  const save = async (lyrics: SyncedLyrics) => {
+    const { error } = await db
+      .from("songs" as never)
+      .update({ lyrics, processing_status: "READY", error_message: null } as never)
+      .eq("id", id);
+    if (error) throw new Error("Couldn't save lyric timing.");
+  };
+
+  const key = process.env["ELEVENLABS_API_KEY"];
+  if (!key) {
+    await save(lineOnly);
+    return json({ lyrics: lineOnly, aligned: false, reason: "not_configured" });
+  }
+
+  if (row.file_size > MAX_BYTES) {
+    await save(lineOnly);
+    return json({ lyrics: lineOnly, aligned: false, reason: "unavailable" });
+  }
+
+  await db.from("songs" as never).update({ processing_status: "ALIGNING" } as never).eq("id", id);
+  try {
+    const { data: audio, error } = await db.storage.from(BUCKET).download(row.file_path);
+    if (error || !audio) throw new Error("Audio file unavailable.");
+    const lines = await forceAlignLyricsToAudio({
+      audio,
+      fileName: row.file_name,
+      lines: lineOnly.lines,
+      duration: Number(row.duration) || 0,
+      apiKey: key,
+      signal: request.signal,
+    });
+    if (!lines) {
+      await save(lineOnly);
+      return json({ lyrics: lineOnly, aligned: false, reason: "unavailable" });
+    }
+
+    const lyrics: SyncedLyrics = { ...lineOnly, lines, wordTimingSource: "audio-aligned" };
+    await save(lyrics);
+    return json({ lyrics, aligned: true });
+  } catch {
+    await save(lineOnly);
+    return json({ lyrics: lineOnly, aligned: false, reason: "unavailable" });
+  }
+}
+
 export const Route = createFileRoute("/api/transcribe")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const key = process.env["LOVABLE_API_KEY"];
-        if (!key) return json({ error: "AI is not configured." }, 500);
-
-        const input = (await request.json().catch(() => null)) as { id?: unknown; deviceId?: unknown } | null;
+        const input = (await request.json().catch(() => null)) as { id?: unknown; deviceId?: unknown; action?: unknown } | null;
         const id = typeof input?.id === "string" ? input.id : "";
         const deviceId = typeof input?.deviceId === "string" ? input.deviceId : "";
         if (!/^[0-9a-f-]{36}$/i.test(id) || deviceId.length < 8) return json({ error: "Invalid request." }, 400);
+        if (input?.action === "align") return alignSavedLyrics(id, deviceId, request);
+
+        const key = process.env["LOVABLE_API_KEY"];
+        if (!key) return json({ error: "AI is not configured." }, 500);
 
         const { admin, getOwnedRow, BUCKET } = await import("@/lib/songs.server");
         const row = await getOwnedRow(id, deviceId);
