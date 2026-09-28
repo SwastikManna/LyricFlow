@@ -9,6 +9,7 @@ export type TranslationDisplayMode = "dual" | "translated" | "hidden";
 interface LyricLineProps {
   line: LyricLineType;
   wordTimingsReliable: boolean;
+  isFullscreen: boolean;
   isActive: boolean;
   translationLanguage: string;
   scriptMode: LyricsScriptMode;
@@ -20,7 +21,7 @@ interface LyricLineProps {
   subscribeTime?: ((listener: (time: number) => void) => () => void) | undefined;
 }
 
-export function LyricLine({ line, wordTimingsReliable, isActive, distance, onSeek, subscribeTime, translationLanguage, scriptMode, translationDisplay }: LyricLineProps) {
+export function LyricLine({ line, wordTimingsReliable, isFullscreen, isActive, distance, onSeek, subscribeTime, translationLanguage, scriptMode, translationDisplay }: LyricLineProps) {
   const [time, setTime] = useState(line.start);
   const frame = useRef(0);
 
@@ -51,7 +52,7 @@ export function LyricLine({ line, wordTimingsReliable, isActive, distance, onSee
       aria-current={isActive ? "true" : undefined}
       className={cn(
         "block w-full cursor-pointer text-balance px-1 py-3 text-left font-display leading-tight",
-        "text-2xl transition-all duration-500 ease-out sm:text-3xl md:text-4xl lg:text-[2.75rem]",
+        isFullscreen ? "text-xl transition-all duration-500 ease-out sm:text-2xl md:text-3xl lg:text-[2.25rem]" : "text-2xl transition-all duration-500 ease-out sm:text-3xl md:text-4xl lg:text-[2.75rem]",
         "hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-0",
         isActive ? "scale-[1.02] font-semibold" : "font-medium blur-[0.3px]",
       )}

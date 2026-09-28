@@ -134,11 +134,111 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [player]);
 
+  const lyricsControls = playerLyrics && (
+    <div className={`border border-glass-border/80 bg-background/45 backdrop-blur-2xl ${isFullscreen ? "rounded-2xl p-3" : "rounded-3xl p-4 shadow-lift sm:p-5"}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
+            <AudioLines className="size-3.5" aria-hidden /> Live lyrics
+          </p>
+          <h2 className="mt-1 font-display text-xl">{isFullscreen ? "Lyric display" : "Choose how lyrics appear"}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {isFullscreen ? "Choose the script and subtitle language." : "Keep the original script or read the same words phonetically."}
+          </p>
+        </div>
+        <span className="rounded-full border border-glass-border bg-glass px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+          {languageName(playerLyrics.language.split("-")[0] ?? playerLyrics.language)} · {playerLyrics.lines.length} lines
+        </span>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-glass-border/60 pt-3">
+        <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground" title="Only audio-aligned timings are used for word-by-word highlighting.">
+          {playerLyrics.wordTimingSource === "audio-aligned" ? "Word timing · audio aligned" : "Line timing · word sync unavailable"}
+        </span>
+        {needsWordAlignment && (
+          <button
+            type="button"
+            onClick={alignWordTimings}
+            disabled={wordAlignmentLoading}
+            className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/[0.08] px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.15] disabled:opacity-60"
+          >
+            {wordAlignmentLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <AudioLines className="size-3.5" aria-hidden />}
+            {wordAlignmentLoading ? "Aligning words…" : "Align words to audio"}
+          </button>
+        )}
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2.5" role="group" aria-label="Lyric script">
+        <button
+          type="button"
+          aria-pressed={scriptMode === "original"}
+          onClick={() => setScriptMode("original")}
+          className={`rounded-2xl border text-left transition-all duration-200 ${isFullscreen ? "p-2.5" : "p-3 sm:p-4"} ${scriptMode === "original" ? "border-primary/55 bg-primary/[0.09] shadow-glow" : "border-glass-border bg-glass/50 hover:border-primary/30 hover:bg-glass"}`}
+        >
+          <span className="flex items-center gap-2 font-display text-base sm:text-lg"><AudioLines className="size-4 text-primary" aria-hidden /> Original script</span>
+          {!isFullscreen && <span className="mt-1 block pl-6 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">As written in the song’s language</span>}
+        </button>
+        <button
+          type="button"
+          aria-pressed={scriptMode === "romanized"}
+          onClick={() => setScriptMode("romanized")}
+          className={`rounded-2xl border text-left transition-all duration-200 ${isFullscreen ? "p-2.5" : "p-3 sm:p-4"} ${scriptMode === "romanized" ? "border-primary/55 bg-primary/[0.09] shadow-glow" : "border-glass-border bg-glass/50 hover:border-primary/30 hover:bg-glass"}`}
+        >
+          <span className="flex items-center gap-2 font-display text-base sm:text-lg"><Languages className="size-4 text-primary" aria-hidden /> Romanized</span>
+          {!isFullscreen && <span className="mt-1 block pl-6 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">Same words, written by sound</span>}
+        </button>
+      </div>
+
+      <div className={`mt-3 grid gap-2.5 ${isFullscreen ? "grid-cols-2" : "sm:grid-cols-2"}`}>
+        <div className="rounded-2xl border border-glass-border/70 bg-background/35 p-2.5">
+          <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Translation language</span>
+          <Select value={translationLanguage} onValueChange={setTranslationLanguage}>
+            <SelectTrigger aria-label="Translation language" className="h-9 rounded-xl border-glass-border bg-glass text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TRANSLATION_LANGUAGES.map((language) => <SelectItem key={language.code} value={language.code}>{language.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="rounded-2xl border border-glass-border/70 bg-background/35 p-2.5">
+          <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Translation subtitles</span>
+          <Select value={translationDisplay} onValueChange={(value) => setTranslationDisplay(value as TranslationDisplayMode)}>
+            <SelectTrigger aria-label="Translation subtitle display" className="h-9 rounded-xl border-glass-border bg-glass text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="dual">Show under lyrics</SelectItem>
+              <SelectItem value="translated">Translation only</SelectItem>
+              <SelectItem value="hidden">Hide translation</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {(needsRomanization || needsTranslation) && (
+        <div className="mt-3 flex flex-wrap justify-start gap-2">
+          {needsRomanization && (
+            <button type="button" onClick={romanizeLyrics} disabled={romanizationLoading} className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/[0.08] px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.15] disabled:opacity-60">
+              {romanizationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
+              {romanizationLoading ? "Writing pronunciations…" : "Create romanized lyrics"}
+            </button>
+          )}
+          {needsTranslation && (
+            <button type="button" onClick={translateLyrics} disabled={translationLoading} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60">
+              {translationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
+              {translationLoading ? "Translating…" : `Translate to ${languageName(translationLanguage)}`}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div ref={shellRef} className="bg-stage relative flex min-h-screen flex-col bg-background">
+    <div ref={shellRef} className={`bg-stage relative flex flex-col bg-background ${isFullscreen ? "h-screen min-h-0 overflow-hidden" : "min-h-screen"}`}>
       <audio ref={player.attach} {...player.audioProps} className="hidden" />
 
-      <header className="mx-auto flex w-full max-w-6xl items-center gap-2 px-5 pt-5 sm:px-8">
+      <header className={`mx-auto flex w-full items-center gap-2 px-5 pt-5 sm:px-8 ${isFullscreen ? "max-w-[1600px] flex-none pt-3" : "max-w-6xl"}`}>
         <Link
           to="/library"
           className="inline-flex items-center gap-2 rounded-full border border-glass-border bg-glass px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -155,129 +255,34 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
         </Link>
       </header>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-5 pb-40 pt-6 sm:px-8 lg:flex-row lg:gap-14 lg:pb-44">
+      <div className={`mx-auto flex w-full flex-1 px-5 sm:px-8 ${isFullscreen ? "min-h-0 max-w-[1600px] flex-col gap-4 overflow-hidden pb-32 pt-4 md:flex-row md:gap-5" : "max-w-6xl flex-col gap-6 pb-40 pt-6 lg:flex-row lg:gap-14 lg:pb-44"}`}>
         {/* Artwork + metadata */}
-        <aside className="lg:sticky lg:top-16 lg:h-fit lg:w-[300px] lg:shrink-0 xl:w-[340px]">
-          <div className="mx-auto flex max-w-[220px] flex-col items-center gap-5 sm:max-w-[260px] lg:mx-0 lg:max-w-none lg:items-start">
+        <aside className={isFullscreen ? "flex min-h-0 w-full shrink-0 flex-col gap-3 overflow-y-auto pr-1 md:w-[320px] lg:w-[360px]" : "lg:sticky lg:top-16 lg:h-fit lg:w-[300px] lg:shrink-0 xl:w-[340px]"}>
+          <div className={isFullscreen ? "mx-auto flex w-full max-w-[160px] flex-col items-center gap-2.5 sm:max-w-[180px] md:mx-0 md:max-w-[180px] md:items-start lg:max-w-[200px]" : "mx-auto flex max-w-[220px] flex-col items-center gap-5 sm:max-w-[260px] lg:mx-0 lg:max-w-none lg:items-start"}>
             <AlbumArtwork
               title={song.title}
               coverImageUrl={song.coverImageUrl}
               isPlaying={player.isPlaying}
               className={player.isPlaying ? "animate-float-slow" : undefined}
             />
-            <div className="w-full text-center lg:text-left">
-              <h1 className="truncate font-display text-xl font-semibold sm:text-2xl">{song.title}</h1>
+            <div className={`w-full ${isFullscreen ? "text-left" : "text-center lg:text-left"}`}>
+              <h1 className={`truncate font-display font-semibold ${isFullscreen ? "text-lg" : "text-xl sm:text-2xl"}`}>{song.title}</h1>
               <p className="mt-1 truncate text-sm text-muted-foreground">{song.artist}</p>
-              <p className="mt-3 text-[0.7rem] uppercase tracking-[0.25em] text-muted-foreground/70">
+              <p className={`text-[0.7rem] uppercase tracking-[0.25em] text-muted-foreground/70 ${isFullscreen ? "mt-1.5" : "mt-3"}`}>
                 {playerLyrics ? `${playerLyrics.lines.length} lines • ${playerLyrics.language}` : "Instrumental"}
               </p>
             </div>
           </div>
+          {isFullscreen && lyricsControls}
         </aside>
 
         {/* Live lyrics */}
-        <section className="flex min-h-[62vh] flex-1 flex-col gap-3 lg:h-[calc(100vh-13rem)] lg:min-h-[520px]" aria-label="Synchronized lyrics">
-          {playerLyrics && (
-            <div className="rounded-3xl border border-glass-border/80 bg-background/45 p-4 shadow-lift backdrop-blur-2xl sm:p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
-                    <AudioLines className="size-3.5" aria-hidden /> Live lyrics
-                  </p>
-                  <h2 className="mt-1 font-display text-xl">Choose how lyrics appear</h2>
-                  <p className="mt-1 text-xs text-muted-foreground">Keep the original script or read the same words phonetically.</p>
-                </div>
-                <span className="rounded-full border border-glass-border bg-glass px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                  {languageName(playerLyrics.language.split("-")[0] ?? playerLyrics.language)} · {playerLyrics.lines.length} lines
-                </span>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-glass-border/60 pt-3">
-                <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground" title="Only audio-aligned timings are used for word-by-word highlighting.">
-                  {playerLyrics.wordTimingSource === "audio-aligned" ? "Word timing · audio aligned" : "Line timing · word sync unavailable"}
-                </span>
-                {needsWordAlignment && (
-                  <button
-                    type="button"
-                    onClick={alignWordTimings}
-                    disabled={wordAlignmentLoading}
-                    className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/[0.08] px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.15] disabled:opacity-60"
-                  >
-                    {wordAlignmentLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <AudioLines className="size-3.5" aria-hidden />}
-                    {wordAlignmentLoading ? "Aligning words…" : "Align words to audio"}
-                  </button>
-                )}
-              </div>
+        <section className={`flex flex-1 flex-col gap-3 ${isFullscreen ? "min-h-0 md:h-full" : "min-h-[62vh] lg:h-[calc(100vh-13rem)] lg:min-h-[520px]"}`} aria-label="Synchronized lyrics">
+          {!isFullscreen && lyricsControls}
 
-              <div className="mt-4 grid grid-cols-2 gap-2.5" role="group" aria-label="Lyric script">
-                <button
-                  type="button"
-                  aria-pressed={scriptMode === "original"}
-                  onClick={() => setScriptMode("original")}
-                  className={`rounded-2xl border p-3 text-left transition-all duration-200 sm:p-4 ${scriptMode === "original" ? "border-primary/55 bg-primary/[0.09] shadow-glow" : "border-glass-border bg-glass/50 hover:border-primary/30 hover:bg-glass"}`}
-                >
-                  <span className="flex items-center gap-2 font-display text-base sm:text-lg"><AudioLines className="size-4 text-primary" aria-hidden /> Original script</span>
-                  <span className="mt-1 block pl-6 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">As written in the song’s language</span>
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={scriptMode === "romanized"}
-                  onClick={() => setScriptMode("romanized")}
-                  className={`rounded-2xl border p-3 text-left transition-all duration-200 sm:p-4 ${scriptMode === "romanized" ? "border-primary/55 bg-primary/[0.09] shadow-glow" : "border-glass-border bg-glass/50 hover:border-primary/30 hover:bg-glass"}`}
-                >
-                  <span className="flex items-center gap-2 font-display text-base sm:text-lg"><Languages className="size-4 text-primary" aria-hidden /> Romanized</span>
-                  <span className="mt-1 block pl-6 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">Same words, written by sound</span>
-                </button>
-              </div>
-
-              <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
-                <div className="rounded-2xl border border-glass-border/70 bg-background/35 p-3">
-                  <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Translation language</span>
-                  <Select value={translationLanguage} onValueChange={setTranslationLanguage}>
-                    <SelectTrigger aria-label="Translation language" className="h-10 rounded-xl border-glass-border bg-glass text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TRANSLATION_LANGUAGES.map((language) => <SelectItem key={language.code} value={language.code}>{language.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="rounded-2xl border border-glass-border/70 bg-background/35 p-3">
-                  <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Translation subtitles</span>
-                  <Select value={translationDisplay} onValueChange={(value) => setTranslationDisplay(value as TranslationDisplayMode)}>
-                    <SelectTrigger aria-label="Translation subtitle display" className="h-10 rounded-xl border-glass-border bg-glass text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="dual">Show under lyrics</SelectItem>
-                      <SelectItem value="translated">Translation only</SelectItem>
-                      <SelectItem value="hidden">Hide translation</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {(needsRomanization || needsTranslation) && (
-                <div className="mt-3 flex flex-wrap justify-end gap-2">
-                  {needsRomanization && (
-                    <button type="button" onClick={romanizeLyrics} disabled={romanizationLoading} className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/[0.08] px-3.5 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.15] disabled:opacity-60">
-                      {romanizationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
-                      {romanizationLoading ? "Writing pronunciations…" : "Create romanized lyrics"}
-                    </button>
-                  )}
-                  {needsTranslation && (
-                    <button type="button" onClick={translateLyrics} disabled={translationLoading} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60">
-                      {translationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
-                      {translationLoading ? "Translating…" : `Translate to ${languageName(translationLanguage)}`}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="relative min-h-[40vh] flex-1 overflow-hidden rounded-3xl border border-glass-border/80 bg-foreground/[0.035] shadow-lift backdrop-blur-2xl lg:min-h-0">
+          <div className={`relative flex-1 overflow-hidden rounded-3xl border border-glass-border/80 bg-foreground/[0.035] shadow-lift backdrop-blur-2xl ${isFullscreen ? "min-h-0" : "min-h-[40vh] lg:min-h-0"}`}>
             <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,oklch(0.82_0.145_78/0.08),transparent_52%)]" />
-            <div className="relative h-full min-h-[40vh] px-3 sm:px-5 lg:min-h-0">
+            <div className={`relative h-full px-3 sm:px-5 ${isFullscreen ? "min-h-0" : "min-h-[40vh] lg:min-h-0"}`}>
               <LyricsDisplay
                 lyrics={playerLyrics}
                 subscribeTime={player.subscribeTime}
@@ -285,6 +290,7 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
                 translationLanguage={translationLanguage}
                 scriptMode={scriptMode}
                 translationDisplay={translationDisplay}
+                isFullscreen={isFullscreen}
               />
             </div>
           </div>

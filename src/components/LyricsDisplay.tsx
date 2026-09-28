@@ -10,10 +10,11 @@ interface LyricsDisplayProps {
   translationLanguage: string;
   scriptMode: LyricsScriptMode;
   translationDisplay: TranslationDisplayMode;
+  isFullscreen?: boolean;
 }
 
 /** Auto-scrolling live lyrics. The active line glides toward the centre. */
-export function LyricsDisplay({ lyrics, subscribeTime, onSeek, translationLanguage, scriptMode, translationDisplay }: LyricsDisplayProps) {
+export function LyricsDisplay({ lyrics, subscribeTime, onSeek, translationLanguage, scriptMode, translationDisplay, isFullscreen = false }: LyricsDisplayProps) {
   const { activeIndex } = useLyricsSync({ lyrics, subscribeTime });
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lineRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -39,13 +40,14 @@ export function LyricsDisplay({ lyrics, subscribeTime, onSeek, translationLangua
   return (
     <div
       ref={containerRef}
-      className="fade-mask-y h-full overflow-y-auto scroll-smooth px-1 py-[28vh] [scrollbar-width:none] sm:px-4 [&::-webkit-scrollbar]:hidden"
+      className={`fade-mask-y h-full overflow-y-auto scroll-smooth px-1 [scrollbar-width:none] sm:px-4 [&::-webkit-scrollbar]:hidden ${isFullscreen ? "py-[12vh]" : "py-[28vh]"}`}
     >
       {lyrics.lines.map((line, index) => (
         <div key={line.id} ref={(el) => { lineRefs.current[index] = el; }}>
           <LyricLine
             line={line}
             wordTimingsReliable={lyrics.wordTimingSource === "audio-aligned"}
+            isFullscreen={isFullscreen}
             isActive={index === activeIndex}
             translationLanguage={translationLanguage}
             scriptMode={scriptMode}
