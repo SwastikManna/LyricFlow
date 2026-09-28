@@ -73,6 +73,15 @@
 }
 
 @layer base {
+  select {
+    color-scheme: dark;
+  }
+
+  select option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
+
   * {
     border-color: var(--color-border);
   }
