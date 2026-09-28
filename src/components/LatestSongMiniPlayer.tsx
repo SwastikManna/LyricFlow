@@ -12,11 +12,13 @@ import type { SyncedLyrics } from "@/types/lyrics";
 
 interface LatestSongMiniPlayerProps {
   song: LibrarySong | null;
+  loading?: boolean;
+  unavailable?: boolean;
 }
 
 type LyricScript = "original" | "romanized";
 
-export function LatestSongMiniPlayer({ song }: LatestSongMiniPlayerProps) {
+export function LatestSongMiniPlayer({ song, loading = false, unavailable = false }: LatestSongMiniPlayerProps) {
   const [track, setTrack] = useState<{ song: Song; lyrics: SyncedLyrics | null } | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [script, setScript] = useState<LyricScript>("original");
@@ -70,13 +72,13 @@ export function LatestSongMiniPlayer({ song }: LatestSongMiniPlayerProps) {
             <div className="min-w-0">
               <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">Live lyrics</p>
               <p className="mt-1 truncate text-[11px] text-muted-foreground sm:text-xs">
-                {song ? `${song.title} · ${song.artist}` : "Your private listening room"}
+                {song ? `${song.title} · ${song.artist}` : unavailable ? "Your archive is unavailable" : loading ? "Loading your archive…" : "Your private listening room"}
               </p>
             </div>
           </div>
           <span className="flex shrink-0 items-center gap-2 font-mono-ui text-[9px] uppercase tracking-[0.14em] text-foreground/40">
             <span className={`size-1.5 rounded-full ${player.isPlaying ? "animate-signal-pulse bg-primary" : "bg-foreground/30"}`} />
-            {player.isPlaying ? "Playing" : track ? "Ready" : song ? "Loading" : "Preview"}
+            {player.isPlaying ? "Playing" : track ? "Ready" : song || loading ? "Loading" : unavailable ? "Unavailable" : "Preview"}
           </span>
         </div>
 
@@ -131,9 +133,9 @@ export function LatestSongMiniPlayer({ song }: LatestSongMiniPlayerProps) {
             </div>
 
             <div className="relative mt-2">
-              <ProgressBar duration={duration} subscribeTime={player.subscribeTime} onSeek={player.seek} />
+              <ProgressBar duration={duration} subscribeTime={player.subscribeTime} onSeek={player.seek} disabled={!track?.song.audioFileUrl} />
             </div>
-            <audio ref={player.attach} {...player.audioProps} className="hidden" />
+            <audio ref={player.attach} {...player.audioProps} preload="none" className="hidden" />
           </>
         ) : (
           <div className="relative mt-5">
@@ -159,6 +161,11 @@ export function LatestSongMiniPlayer({ song }: LatestSongMiniPlayerProps) {
           <Link to={playerPath} params={{ songId: song.id }} aria-label="Open full player" className="inline-flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-primary">
             <ArrowRight className="size-3.5" />
           </Link>
+        </div>
+      ) : loading || unavailable ? (
+        <div className="absolute -bottom-5 -left-3 inline-flex items-center gap-3 rounded-full border border-glass-border bg-card/90 px-4 py-2.5 font-mono-ui text-[9px] uppercase tracking-[0.17em] text-foreground/55 shadow-lg backdrop-blur-xl sm:-left-5" role="status">
+          <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary/15 text-primary"><Disc3 className="size-3" /></span>
+          {loading ? "Loading your archive" : "Archive unavailable"}
         </div>
       ) : (
         <Link to="/upload" className="absolute -bottom-5 -left-3 inline-flex items-center gap-3 rounded-full border border-glass-border bg-card/90 px-4 py-2.5 font-mono-ui text-[9px] uppercase tracking-[0.17em] text-foreground/55 shadow-lg backdrop-blur-xl transition-colors hover:text-foreground sm:-left-5">

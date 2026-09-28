@@ -82,7 +82,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Turn your music into a living lyric experience." },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "LyricFlow" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:card", content: "summary" },
     ],
     links: [
       {

@@ -4,6 +4,7 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { getSongWithLyrics } from "@/api/songs";
 import type { Song } from "@/types/song";
 import type { SyncedLyrics } from "@/types/lyrics";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/player/$songId")({
   head: () => ({
@@ -23,11 +24,7 @@ export const Route = createFileRoute("/player/$songId")({
     ],
   }),
   component: PlayerPage,
-  errorComponent: ({ error }) => (
-    <div role="alert" className="p-10 text-center text-muted-foreground">
-      {error.message}
-    </div>
-  ),
+  errorComponent: RouteError,
   notFoundComponent: () => <div className="p-10 text-center">Song not found.</div>,
 });
 

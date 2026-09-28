@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowRight, AudioLines, Disc3, Play } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ArrowRight, AudioLines, Disc3 } from "lucide-react";
 import { listSongs } from "@/api/songs";
 import { formatTime } from "@/hooks/useAudioPlayer";
 import type { LibrarySong } from "@/lib/songs.functions";
 import { LatestSongMiniPlayer } from "@/components/LatestSongMiniPlayer";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,26 +20,38 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Upload MP3, MP4, WAV or M4A and watch your lyrics scroll in perfect time with the music.",
+          "Upload MP3, MP4, WAV or M4A and follow synchronized lyrics as your song plays.",
+      },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "LyricFlow — Living lyrics for your music" },
+      {
+        name: "twitter:description",
+        content: "Follow your songs with synchronized lyrics, phonetic writing and beat-aware timing.",
       },
     ],
   }),
   component: Home,
-  errorComponent: ({ error }) => (
-    <div role="alert" className="p-10 text-center text-muted-foreground">
-      {error.message}
-    </div>
-  ),
+  errorComponent: RouteError,
   notFoundComponent: () => <div className="p-10 text-center">Page not found.</div>,
 });
 
 function Home() {
   const navigate = useNavigate();
-  const [songs, setSongs] = useState<LibrarySong[]>([]);
+  const [songs, setSongs] = useState<LibrarySong[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
-  useEffect(() => {
-    listSongs().then(setSongs).catch(() => setSongs([]));
+  const loadSongs = useCallback(() => {
+    setSongs(null);
+    setLoadError(false);
+    listSongs()
+      .then(setSongs)
+      .catch(() => {
+        setSongs([]);
+        setLoadError(true);
+      });
   }, []);
+
+  useEffect(() => loadSongs(), [loadSongs]);
 
   return (
     <main className="grain bg-stage min-h-screen bg-background">
@@ -76,7 +89,7 @@ function Home() {
             <Link to="/upload" className="inline-flex items-center gap-3 rounded-full bg-primary px-5 py-3 text-[10px] font-bold uppercase tracking-[0.13em] text-primary-foreground shadow-glow transition-transform hover:-translate-y-0.5">
               Start with a song <ArrowRight className="size-3.5" />
             </Link>
-            <span className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/70">MP3 · WAV · M4A</span>
+            <span className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/70">MP3 · MP4 · WAV · M4A</span>
           </div>
         </div>
 
@@ -84,7 +97,7 @@ function Home() {
           <div className="pointer-events-none absolute -inset-3 rounded-[42%] border border-primary/[0.08]" />
           <div className="pointer-events-none absolute left-1/2 top-1/2 size-[260px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/10 sm:size-[420px]" />
           <div className="animate-orbit pointer-events-none absolute left-1/2 top-1/2 size-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/[0.06] sm:size-[520px]" />
-          <LatestSongMiniPlayer song={songs[0] ?? null} />
+          <LatestSongMiniPlayer song={songs?.[0] ?? null} loading={songs === null} unavailable={loadError} />
         </div>
       </section>
 
@@ -94,10 +107,17 @@ function Home() {
             <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-primary">Your archive</p>
             <h2 className="mt-2 font-display text-xl tracking-[-0.04em] sm:text-3xl">The room remembers.</h2>
           </div>
-          <Link to="/library" className="pb-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-primary">{songs.length ? `${songs.length} songs` : "See all"}</Link>
+          <Link to="/library" className="pb-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-primary">{songs?.length ? `${songs.length} songs` : "See all"}</Link>
         </div>
 
-        {songs.length > 0 ? (
+        {songs === null ? (
+          <p className="mt-5 text-sm text-muted-foreground" role="status">Loading your archive…</p>
+        ) : loadError ? (
+          <div className="mt-5 flex flex-wrap items-center gap-3 rounded-xl border border-glass-border px-4 py-4">
+            <p className="text-xs text-muted-foreground">Your archive couldn’t load. Check your connection and try again.</p>
+            <button type="button" onClick={loadSongs} className="ml-auto text-[9px] font-semibold uppercase tracking-widest text-primary">Try again</button>
+          </div>
+        ) : songs.length > 0 ? (
           <ul className="mt-5 divide-y divide-glass-border/50">
             {songs.slice(0, 3).map((song) => (
               <li key={song.id} className="flex items-center gap-3 py-3">

@@ -9,6 +9,7 @@ import { TRANSLATION_LANGUAGES } from "@/lib/languages";
 import { BeatGridTimeline } from "@/components/BeatGridTimeline";
 import type { LyricLine, SyncedLyrics } from "@/types/lyrics";
 import type { Song } from "@/types/song";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/edit/$songId")({
   head: () => ({
@@ -19,10 +20,11 @@ export const Route = createFileRoute("/edit/$songId")({
       { property: "og:description", content: "Tweak lyric text and align the words to the recording." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex,follow" },
     ],
   }),
   component: EditPage,
-  errorComponent: ({ error }) => <div role="alert" className="p-10 text-center text-muted-foreground">{error.message}</div>,
+  errorComponent: RouteError,
   notFoundComponent: () => <div className="p-10 text-center">Page not found.</div>,
 });
 
@@ -159,6 +161,7 @@ function EditPage() {
 
       <section className="mx-auto max-w-4xl px-4 pb-16 pt-5 sm:px-8 sm:pb-24 sm:pt-6">
         <p className="text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">Edit lyric text, translations, romanizations, or timings. Romanization writes the same words phonetically in Latin letters. Save your changes, then align the words to the recording from the player.</p>
+        {rows === null && !missing && <p role="status" className="mt-6 text-sm text-muted-foreground">Loading track and lyrics…</p>}
         {beatGrid && song && (
           <div className="mt-4 sm:mt-6">
             <BeatGridTimeline

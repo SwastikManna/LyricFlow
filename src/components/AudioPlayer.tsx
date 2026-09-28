@@ -122,7 +122,10 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) return;
+      if (
+        e.target instanceof HTMLElement &&
+        (e.target.isContentEditable || e.target.closest("input, textarea, select, button, [role='slider']"))
+      ) return;
       if (e.code === "Space") {
         e.preventDefault();
         player.toggle();

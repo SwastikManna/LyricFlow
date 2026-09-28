@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AudioLines, Play, Trash2, Plus, Grid3X3 } from "lucide-react";
 import { AlbumArtwork } from "@/components/AlbumArtwork";
 import { deleteSong, listSongs } from "@/api/songs";
 import { formatTime } from "@/hooks/useAudioPlayer";
 import type { LibrarySong } from "@/lib/songs.functions";
+import { toast } from "sonner";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/library")({
   head: () => ({
@@ -15,12 +17,11 @@ export const Route = createFileRoute("/library")({
       { property: "og:description", content: "Your saved songs with live, word-by-word lyrics." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex,follow" },
     ],
   }),
   component: LibraryPage,
-  errorComponent: ({ error }) => (
-    <div role="alert" className="p-10 text-center text-muted-foreground">{error.message}</div>
-  ),
+  errorComponent: RouteError,
   notFoundComponent: () => <div className="p-10 text-center">Page not found.</div>,
 });
 
@@ -37,14 +38,24 @@ function LibraryPage() {
   const [songs, setSongs] = useState<LibrarySong[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    listSongs().then(setSongs).catch(() => setError("We couldn't load your library. Try again in a moment."));
+  const loadSongs = useCallback(() => {
+    setSongs(null);
+    setError(null);
+    listSongs().then(setSongs).catch(() => setError("We couldn't load your library. Check your connection and try again."));
   }, []);
+
+  useEffect(() => { loadSongs(); }, [loadSongs]);
 
   const remove = async (id: string) => {
     if (!window.confirm("Delete this song and its lyrics?")) return;
+    const removed = songs?.find((song) => song.id === id);
     setSongs((prev) => prev?.filter((s) => s.id !== id) ?? null);
-    await deleteSong(id).catch(() => {});
+    try {
+      await deleteSong(id);
+    } catch {
+      if (removed) setSongs((prev) => [...(prev ?? []), removed].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+      toast.error("That song couldn’t be deleted. Please try again.");
+    }
   };
 
   const open = (song: LibrarySong) =>
@@ -71,7 +82,14 @@ function LibraryPage() {
         <h1 className="font-display text-2xl font-semibold sm:text-4xl">Your library</h1>
         <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2 sm:text-base">Songs saved in this browser.</p>
 
-        {error && <p className="mt-10 text-muted-foreground">{error}</p>}
+        {error && (
+          <div className="mt-10 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <p>{error}</p>
+            <button type="button" onClick={loadSongs} className="font-semibold text-primary hover:underline">
+              Try again
+            </button>
+          </div>
+        )}
         {!songs && !error && <p className="mt-10 text-muted-foreground">Loading…</p>}
 
         {songs && songs.length === 0 && (

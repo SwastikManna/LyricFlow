@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { ArrowLeft, AudioLines } from "lucide-react";
 import { UploadBox } from "@/components/UploadBox";
 import { createSong } from "@/api/songs";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/upload")({
   head: () => ({
@@ -16,16 +17,13 @@ export const Route = createFileRoute("/upload")({
       { property: "og:title", content: "Upload a track — LyricFlow" },
       {
         property: "og:description",
-        content: "Drop in a song and get synchronized, scrolling lyrics in seconds.",
+        content: "Upload a song and get synchronized lyrics ready for live playback.",
       },
+      { name: "robots", content: "noindex,follow" },
     ],
   }),
   component: UploadPage,
-  errorComponent: ({ error }) => (
-    <div role="alert" className="p-10 text-center text-muted-foreground">
-      {error.message}
-    </div>
-  ),
+  errorComponent: RouteError,
   notFoundComponent: () => <div className="p-10 text-center">Page not found.</div>,
 });
 
@@ -50,7 +48,7 @@ function UploadPage() {
       navigate({ to: "/processing/$songId", params: { songId: song.id } });
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
-        setError("We couldn't read that file. Try another one.");
+        setError("The upload didn’t finish. Please try again.");
       }
       setIsUploading(false);
       setProgress(0);

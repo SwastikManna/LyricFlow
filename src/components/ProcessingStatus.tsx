@@ -12,7 +12,14 @@ export function ProcessingStatus({ currentStage, progress }: ProcessingStatusPro
   return (
     <div className="w-full max-w-md">
       <div className="mb-8 sm:mb-10">
-        <div className="h-1 w-full overflow-hidden rounded-full bg-foreground/15">
+        <div
+          role="progressbar"
+          aria-label="Track analysis progress"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progress}
+          className="h-1 w-full overflow-hidden rounded-full bg-foreground/15"
+        >
           <div
             className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
             style={{ width: `${progress}%` }}

@@ -71,8 +71,15 @@ export const deleteSongFn = createServerFn({ method: "POST" })
     const row = await getOwnedRow(data.id, data.deviceId);
     if (!row) return { ok: true };
     const db = await admin();
-    await db.storage.from(BUCKET).remove([row.file_path]);
-    await db.from("songs" as never).delete().eq("id", data.id);
+    const { error: deleteError } = await db
+      .from("songs" as never)
+      .delete()
+      .eq("id", data.id)
+      .eq("device_id", data.deviceId);
+    if (deleteError) throw new Error(deleteError.message);
+
+    const { error: storageError } = await db.storage.from(BUCKET).remove([row.file_path]);
+    if (storageError) console.error("[songs] Deleted song record, but could not remove its audio file:", storageError);
     return { ok: true };
   });
 

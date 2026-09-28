@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ProcessingStatus } from "@/components/ProcessingStatus";
 import { getSong, processSong, PROCESSING_STAGES } from "@/api/songs";
 import type { Song } from "@/types/song";
+import { RouteError } from "@/components/RouteError";
 
 export const Route = createFileRoute("/processing/$songId")({
   head: () => ({
@@ -22,11 +23,7 @@ export const Route = createFileRoute("/processing/$songId")({
     ],
   }),
   component: ProcessingPage,
-  errorComponent: ({ error }) => (
-    <div role="alert" className="p-10 text-center text-muted-foreground">
-      {error.message}
-    </div>
-  ),
+  errorComponent: RouteError,
   notFoundComponent: () => <div className="p-10 text-center">Song not found.</div>,
 });
 
@@ -76,7 +73,8 @@ function ProcessingPage() {
         }
       } catch (err) {
         if (cancelled || (err instanceof DOMException && err.name === "AbortError")) return;
-        setError(err instanceof Error ? err.message : "Something went wrong analyzing this track.");
+        console.error("[processing] Could not finish analyzing track:", err);
+        setError("The analysis stopped before it could finish. Upload the track again or choose another file.");
       }
     })();
 
@@ -90,7 +88,7 @@ function ProcessingPage() {
     return (
       <main className="bg-stage flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
         <h1 className="font-display text-2xl font-semibold">
-          {error ? "We couldn't read the lyrics" : "This song isn't available"}
+          {error ? "We couldn’t finish analyzing this song" : "This song isn’t available"}
         </h1>
         <p className="max-w-sm text-muted-foreground">
           {error ??

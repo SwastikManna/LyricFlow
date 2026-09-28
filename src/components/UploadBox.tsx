@@ -31,6 +31,9 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
   return (
     <div className="w-full">
       <div
+        role={file ? undefined : "button"}
+        tabIndex={file ? undefined : 0}
+        aria-label={file ? undefined : "Choose an audio track to upload"}
         onDragOver={(e) => {
           e.preventDefault();
           setIsOver(true);
@@ -42,8 +45,13 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
           accept(e.dataTransfer.files?.[0]);
         }}
         onClick={() => !file && inputRef.current?.click()}
+        onKeyDown={(event) => {
+          if (file || (event.key !== "Enter" && event.key !== " ")) return;
+          event.preventDefault();
+          inputRef.current?.click();
+        }}
         className={cn(
-          "glass-panel group relative flex flex-col items-center justify-center text-center transition-all duration-300",
+          "glass-panel group relative flex flex-col items-center justify-center text-center transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           compact
             ? "rounded-xl border-dashed border-primary/40 bg-card/40"
             : "rounded-3xl",
@@ -75,16 +83,9 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
             <p className={cn("text-xs uppercase tracking-[0.3em] text-muted-foreground/70", compact ? "mt-4" : "mt-6")}>
               MP3 • MP4 • WAV • M4A
             </p>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                inputRef.current?.click();
-              }}
-              className={cn("rounded-full border border-glass-border px-6 text-sm font-medium text-foreground transition-colors hover:bg-glass", compact ? "mt-4 py-2" : "mt-6 py-2.5")}
-            >
+            <span className={cn("rounded-full border border-glass-border px-6 text-sm font-medium text-foreground transition-colors group-hover:bg-glass", compact ? "mt-4 py-2" : "mt-6 py-2.5")}>
               Browse files
-            </button>
+            </span>
           </>
         ) : (
           <div className="w-full max-w-lg text-left">
@@ -108,7 +109,14 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
               )}
             </div>
 
-            <div className="mt-6 h-1 w-full overflow-hidden rounded-full bg-foreground/15">
+            <div
+              role={isUploading ? "progressbar" : undefined}
+              aria-label={isUploading ? "Upload progress" : undefined}
+              aria-valuemin={isUploading ? 0 : undefined}
+              aria-valuemax={isUploading ? 100 : undefined}
+              aria-valuenow={isUploading ? progress : undefined}
+              className="mt-6 h-1 w-full overflow-hidden rounded-full bg-foreground/15"
+            >
               <div
                 className="h-full rounded-full bg-primary transition-[width] duration-200"
                 style={{ width: `${isUploading ? progress : 0}%` }}
@@ -138,7 +146,7 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
         )}
       </div>
 
-      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
     </div>
   );
 }
