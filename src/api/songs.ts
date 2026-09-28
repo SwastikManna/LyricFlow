@@ -1,6 +1,7 @@
 import type { Song, SongStatus, ProcessingStatus } from "@/types/song";
 import type { Lyrics } from "@/types/lyrics";
 import { transcribeSavedSong } from "@/lib/ai-transcription";
+import { romanizeSavedSong } from "@/lib/ai-romanization";
 import { alignLyricsToBeats, detectBeats } from "@/lib/beat-detection";
 import type { SyncedLyrics } from "@/types/lyrics";
 import {
@@ -118,7 +119,8 @@ export const PROCESSING_STAGES: ProcessingStage[] = [
   { key: "upload", label: "Uploading audio", doneLabel: "Audio uploaded", status: "UPLOADED", progress: 12, durationMs: 500 },
   { key: "inspect", label: "Reading audio", doneLabel: "Audio ready", status: "PROCESSING", progress: 24, durationMs: 300 },
   { key: "transcribe", label: "Transcribing with AI", doneLabel: "Lyrics timestamped", status: "TRANSCRIBING", progress: 68, durationMs: 0 },
-  { key: "beat", label: "Tracking the beat", doneLabel: "Beat grid detected", status: "PROCESSING", progress: 82, durationMs: 0 },
+  { key: "romanize", label: "Writing phonetic lyrics", doneLabel: "Romanized lyrics ready", status: "PROCESSING", progress: 77, durationMs: 0 },
+  { key: "beat", label: "Tracking the beat", doneLabel: "Beat grid detected", status: "PROCESSING", progress: 85, durationMs: 0 },
   { key: "align", label: "Aligning lyrics to the song", doneLabel: "Lyrics synchronized", status: "ALIGNING", progress: 94, durationMs: 0 },
   { key: "finalize", label: "Finalizing", doneLabel: "Ready to play", status: "READY", progress: 100, durationMs: 300 },
 ];
@@ -144,6 +146,18 @@ export async function processSong(
     if (signal?.aborted) throw new DOMException("Processing cancelled", "AbortError");
     onStage?.(i, { songId: id, processingStatus: stage.status, progress: stage.progress, stage: stage.label });
     if (stage.key === "transcribe") lyrics = await transcription;
+    else if (stage.key === "romanize" && lyrics) {
+      const romanizations = await romanizeSavedSong(id, getDeviceId(), signal).catch(() => null);
+      if (romanizations) {
+        lyrics = {
+          ...lyrics,
+          lines: lyrics.lines.map((line) => ({
+            ...line,
+            ...(romanizations[line.id] ? { romanization: romanizations[line.id] } : {}),
+          })),
+        };
+      }
+    }
     else if (stage.key === "beat") grid = await beats;
     else if (stage.key === "align" && lyrics) {
       if (grid && grid.confidence > 0.05) {

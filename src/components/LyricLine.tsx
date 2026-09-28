@@ -3,13 +3,15 @@ import { cn } from "@/lib/utils";
 import { LyricWord } from "./LyricWord";
 import type { LyricLine as LyricLineType } from "@/types/lyrics";
 
-export type LyricsDisplayMode = "dual" | "translated" | "original" | "dualRomanized" | "romanized";
+export type LyricsScriptMode = "original" | "romanized";
+export type TranslationDisplayMode = "dual" | "translated" | "hidden";
 
 interface LyricLineProps {
   line: LyricLineType;
   isActive: boolean;
   translationLanguage: string;
-  displayMode: LyricsDisplayMode;
+  scriptMode: LyricsScriptMode;
+  translationDisplay: TranslationDisplayMode;
   /** Distance from the active line; used to fade far-away lines. */
   distance: number;
   onSeek: (time: number) => void;
@@ -17,29 +19,29 @@ interface LyricLineProps {
   subscribeTime?: ((listener: (time: number) => void) => () => void) | undefined;
 }
 
-export function LyricLine({ line, isActive, distance, onSeek, subscribeTime, translationLanguage, displayMode }: LyricLineProps) {
+export function LyricLine({ line, isActive, distance, onSeek, subscribeTime, translationLanguage, scriptMode, translationDisplay }: LyricLineProps) {
   const [time, setTime] = useState(line.start);
   const frame = useRef(0);
 
   useEffect(() => {
-    if (!isActive || !subscribeTime || displayMode === "translated" || displayMode === "romanized") return;
+    if (!isActive || !subscribeTime) return;
     return subscribeTime((t) => {
       // Throttle to ~20fps: karaoke reveal does not need every frame.
       frame.current = (frame.current + 1) % 3;
       if (frame.current === 0) setTime(t);
     });
-  }, [displayMode, isActive, subscribeTime]);
+  }, [isActive, subscribeTime]);
 
   const opacity = isActive ? 1 : Math.max(0.14, 0.5 - distance * 0.09);
   const hasWords = Boolean(line.words?.length);
   const translation = line.translations?.[translationLanguage]?.trim();
   const romanization = line.romanization?.trim();
-  const hasRomanization = Boolean(romanization) && romanization?.toLocaleLowerCase() !== line.text.trim().toLocaleLowerCase();
-  const showTranslation = (displayMode === "dual" || displayMode === "translated") && Boolean(translation) && translation?.toLocaleLowerCase() !== line.text.trim().toLocaleLowerCase();
-  const showRomanization = (displayMode === "dualRomanized" || displayMode === "romanized") && hasRomanization;
-  const showOriginal = displayMode === "dual" || displayMode === "original" || displayMode === "dualRomanized"
-    || (displayMode === "translated" && !translation)
-    || (displayMode === "romanized" && !hasRomanization);
+  const sourceText = scriptMode === "romanized" && romanization ? romanization : line.text;
+  const hasTranslation = Boolean(translation) && translation?.toLocaleLowerCase() !== sourceText.toLocaleLowerCase();
+  const primaryText = translationDisplay === "translated" && hasTranslation ? translation! : sourceText;
+  const showTranslation = translationDisplay === "dual" && hasTranslation;
+  const primaryIsOriginal = primaryText === line.text;
+  const primaryIsRomanized = Boolean(romanization) && primaryText === romanization;
 
   return (
     <button
@@ -55,7 +57,7 @@ export function LyricLine({ line, isActive, distance, onSeek, subscribeTime, tra
       style={{ opacity, transformOrigin: "left center" }}
     >
       <span className="block">
-        {showOriginal && (isActive && hasWords ? (
+        {isActive && hasWords && primaryIsOriginal ? (
           <span>
             {line.words!.map((word, i) => {
               const span = Math.max(0.001, word.end - word.start);
@@ -68,17 +70,17 @@ export function LyricLine({ line, isActive, distance, onSeek, subscribeTime, tra
               );
             })}
           </span>
+        ) : isActive && primaryIsRomanized ? (
+          <LyricWord
+            word={{ text: primaryText, start: line.start, end: line.end }}
+            progress={(time - line.start) / Math.max(0.001, line.end - line.start)}
+          />
         ) : (
-          <span className={isActive ? "text-foreground" : undefined}>{line.text}</span>
-        ))}
-        {showTranslation && (
-          <span className={`mt-1 block animate-in fade-in-0 duration-300 font-normal leading-snug tracking-normal transition-opacity ${displayMode === "translated" ? "font-display text-[1em] text-foreground" : "font-sans text-[0.55em] text-muted-foreground"} ${isActive ? "opacity-90" : "opacity-75"}`}>
-            {translation}
-          </span>
+          <span className={isActive ? "text-foreground" : undefined}>{primaryText}</span>
         )}
-        {showRomanization && (
-          <span className={`mt-1 block animate-in fade-in-0 duration-300 font-normal leading-snug tracking-normal transition-opacity ${displayMode === "romanized" ? "font-display text-[1em] text-foreground" : "font-sans text-[0.55em] text-muted-foreground"} ${isActive ? "opacity-90" : "opacity-75"}`}>
-            {romanization}
+        {showTranslation && (
+          <span className={`mt-1 block animate-in fade-in-0 duration-300 font-normal leading-snug tracking-normal transition-opacity font-sans text-[0.55em] text-muted-foreground ${isActive ? "opacity-90" : "opacity-75"}`}>
+            {translation}
           </span>
         )}
       </span>

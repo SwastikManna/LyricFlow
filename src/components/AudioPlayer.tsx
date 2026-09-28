@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, House, Languages, LoaderCircle } from "lucide-react";
+import { ArrowLeft, AudioLines, House, Languages, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AlbumArtwork } from "./AlbumArtwork";
 import { LyricsDisplay } from "./LyricsDisplay";
@@ -11,9 +11,10 @@ import { getDeviceId, setSongDuration } from "@/api/songs";
 import { romanizeSavedSong } from "@/lib/ai-romanization";
 import { translateSavedSong } from "@/lib/ai-translation";
 import { languageName, TRANSLATION_LANGUAGES } from "@/lib/languages";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import type { Song } from "@/types/song";
 import type { SyncedLyrics } from "@/types/lyrics";
-import type { LyricsDisplayMode } from "./LyricLine";
+import type { LyricsScriptMode, TranslationDisplayMode } from "./LyricLine";
 
 interface AudioPlayerProps {
   song: Song;
@@ -27,7 +28,8 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [playerLyrics, setPlayerLyrics] = useState(lyrics);
   const [translationLanguage, setTranslationLanguage] = useState("en");
-  const [displayMode, setDisplayMode] = useState<LyricsDisplayMode>("dual");
+  const [scriptMode, setScriptMode] = useState<LyricsScriptMode>("original");
+  const [translationDisplay, setTranslationDisplay] = useState<TranslationDisplayMode>("dual");
   const [translationLoading, setTranslationLoading] = useState(false);
   const [romanizationLoading, setRomanizationLoading] = useState(false);
 
@@ -73,7 +75,7 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
           ...(romanizations[line.id] ? { romanization: romanizations[line.id] } : {}),
         })),
       } : current);
-      setDisplayMode((mode) => mode === "romanized" ? "romanized" : "dualRomanized");
+      setScriptMode("romanized");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Romanization failed. Please try again.");
     } finally {
@@ -129,54 +131,6 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
         >
           <House className="size-4" aria-hidden />
         </Link>
-        {playerLyrics && (
-          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-            <label className="sr-only" htmlFor="translation-language">Translation language</label>
-            <select
-              id="translation-language"
-              value={translationLanguage}
-              onChange={(event) => setTranslationLanguage(event.target.value)}
-              className="max-w-28 rounded-full border border-glass-border bg-glass px-3 py-2 text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:max-w-none"
-            >
-              {TRANSLATION_LANGUAGES.map((language) => <option key={language.code} value={language.code}>{language.name}</option>)}
-            </select>
-            <label className="sr-only" htmlFor="lyrics-display-mode">Lyrics display mode</label>
-            <select
-              id="lyrics-display-mode"
-              value={displayMode}
-              onChange={(event) => setDisplayMode(event.target.value as LyricsDisplayMode)}
-              className="max-w-40 rounded-full border border-glass-border bg-glass px-3 py-2 text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:max-w-none"
-            >
-              <option value="dual">Dual · {languageName(translationLanguage)}</option>
-              <option value="translated">{languageName(translationLanguage)} only</option>
-              <option value="original">Original only</option>
-              <option value="dualRomanized">Original + Romanized</option>
-              <option value="romanized">Romanized only</option>
-            </select>
-            {needsTranslation && (
-              <button
-                type="button"
-                onClick={translateLyrics}
-                disabled={translationLoading}
-                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                {translationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
-                {translationLoading ? "Translating…" : "Translate"}
-              </button>
-            )}
-            {needsRomanization && (
-              <button
-                type="button"
-                onClick={romanizeLyrics}
-                disabled={romanizationLoading}
-                className="inline-flex items-center gap-1.5 rounded-full border border-primary/50 bg-primary/10 px-3.5 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/20 disabled:opacity-60"
-              >
-                {romanizationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
-                {romanizationLoading ? "Writing sounds…" : "Romanize"}
-              </button>
-            )}
-          </div>
-        )}
       </header>
 
       <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-5 pb-40 pt-6 sm:px-8 lg:flex-row lg:gap-14 lg:pb-44">
@@ -200,14 +154,102 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
         </aside>
 
         {/* Live lyrics */}
-        <section className="min-h-[52vh] flex-1 lg:h-[calc(100vh-13rem)]" aria-label="Synchronized lyrics">
-          <LyricsDisplay
-            lyrics={playerLyrics}
-            subscribeTime={player.subscribeTime}
-            onSeek={player.seek}
-            translationLanguage={translationLanguage}
-            displayMode={displayMode}
-          />
+        <section className="flex min-h-[62vh] flex-1 flex-col gap-3 lg:h-[calc(100vh-13rem)] lg:min-h-[520px]" aria-label="Synchronized lyrics">
+          {playerLyrics && (
+            <div className="rounded-3xl border border-glass-border/80 bg-background/45 p-4 shadow-lift backdrop-blur-2xl sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
+                    <AudioLines className="size-3.5" aria-hidden /> Live lyrics
+                  </p>
+                  <h2 className="mt-1 font-display text-xl">Choose how lyrics appear</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">Keep the original script or read the same words phonetically.</p>
+                </div>
+                <span className="rounded-full border border-glass-border bg-glass px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {languageName(playerLyrics.language.split("-")[0] ?? playerLyrics.language)} · {playerLyrics.lines.length} lines
+                </span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2.5" role="group" aria-label="Lyric script">
+                <button
+                  type="button"
+                  aria-pressed={scriptMode === "original"}
+                  onClick={() => setScriptMode("original")}
+                  className={`rounded-2xl border p-3 text-left transition-all duration-200 sm:p-4 ${scriptMode === "original" ? "border-primary/55 bg-primary/[0.09] shadow-glow" : "border-glass-border bg-glass/50 hover:border-primary/30 hover:bg-glass"}`}
+                >
+                  <span className="flex items-center gap-2 font-display text-base sm:text-lg"><AudioLines className="size-4 text-primary" aria-hidden /> Original script</span>
+                  <span className="mt-1 block pl-6 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">As written in the song’s language</span>
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={scriptMode === "romanized"}
+                  onClick={() => setScriptMode("romanized")}
+                  className={`rounded-2xl border p-3 text-left transition-all duration-200 sm:p-4 ${scriptMode === "romanized" ? "border-primary/55 bg-primary/[0.09] shadow-glow" : "border-glass-border bg-glass/50 hover:border-primary/30 hover:bg-glass"}`}
+                >
+                  <span className="flex items-center gap-2 font-display text-base sm:text-lg"><Languages className="size-4 text-primary" aria-hidden /> Romanized</span>
+                  <span className="mt-1 block pl-6 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">Same words, written by sound</span>
+                </button>
+              </div>
+
+              <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+                <div className="rounded-2xl border border-glass-border/70 bg-background/35 p-3">
+                  <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Translation language</span>
+                  <Select value={translationLanguage} onValueChange={setTranslationLanguage}>
+                    <SelectTrigger aria-label="Translation language" className="h-10 rounded-xl border-glass-border bg-glass text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TRANSLATION_LANGUAGES.map((language) => <SelectItem key={language.code} value={language.code}>{language.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="rounded-2xl border border-glass-border/70 bg-background/35 p-3">
+                  <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Translation subtitles</span>
+                  <Select value={translationDisplay} onValueChange={(value) => setTranslationDisplay(value as TranslationDisplayMode)}>
+                    <SelectTrigger aria-label="Translation subtitle display" className="h-10 rounded-xl border-glass-border bg-glass text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dual">Show under lyrics</SelectItem>
+                      <SelectItem value="translated">Translation only</SelectItem>
+                      <SelectItem value="hidden">Hide translation</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {(needsRomanization || needsTranslation) && (
+                <div className="mt-3 flex flex-wrap justify-end gap-2">
+                  {needsRomanization && (
+                    <button type="button" onClick={romanizeLyrics} disabled={romanizationLoading} className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/[0.08] px-3.5 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.15] disabled:opacity-60">
+                      {romanizationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
+                      {romanizationLoading ? "Writing pronunciations…" : "Create romanized lyrics"}
+                    </button>
+                  )}
+                  {needsTranslation && (
+                    <button type="button" onClick={translateLyrics} disabled={translationLoading} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60">
+                      {translationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
+                      {translationLoading ? "Translating…" : `Translate to ${languageName(translationLanguage)}`}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="relative min-h-[40vh] flex-1 overflow-hidden rounded-3xl border border-glass-border/80 bg-foreground/[0.035] shadow-lift backdrop-blur-2xl lg:min-h-0">
+            <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,oklch(0.82_0.145_78/0.08),transparent_52%)]" />
+            <div className="relative h-full min-h-[40vh] px-3 sm:px-5 lg:min-h-0">
+              <LyricsDisplay
+                lyrics={playerLyrics}
+                subscribeTime={player.subscribeTime}
+                onSeek={player.seek}
+                translationLanguage={translationLanguage}
+                scriptMode={scriptMode}
+                translationDisplay={translationDisplay}
+              />
+            </div>
+          </div>
         </section>
       </div>
 

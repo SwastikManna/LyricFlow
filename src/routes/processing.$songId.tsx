@@ -11,12 +11,12 @@ export const Route = createFileRoute("/processing/$songId")({
       {
         name: "description",
         content:
-          "LyricFlow is extracting the audio, transcribing the vocals and aligning timestamps for your song.",
+          "LyricFlow transcribes your song, writes phonetic lyrics, detects its beat and aligns every line.",
       },
       { property: "og:title", content: "Analyzing your track — LyricFlow" },
       {
         property: "og:description",
-        content: "Extracting audio, transcribing vocals and aligning lyric timestamps.",
+        content: "Transcribing vocals, preparing phonetic lyrics and aligning lyric timestamps.",
       },
       { name: "robots", content: "noindex" },
     ],
