@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Plus, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { getDeviceId, getSongWithLyrics } from "@/api/songs";
@@ -43,6 +43,10 @@ function EditPage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [isAnalyzingBeats, setIsAnalyzingBeats] = useState(false);
   const [saving, setSaving] = useState(false);
+  const timelineLines = useMemo(
+    () => (rows ?? []).map((row) => ({ id: row.id, text: row.text, start: Number(row.start) || 0, end: Number(row.end) || 0 })),
+    [rows],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -159,7 +163,7 @@ function EditPage() {
               beats={beatGrid.beats}
               bpm={beatGrid.bpm}
               confidence={beatGrid.confidence}
-              lines={(rows ?? []).map((row) => ({ id: row.id, text: row.text, start: Number(row.start) || 0, end: Number(row.end) || 0 }))}
+              lines={timelineLines}
               selectedLineId={selectedLineId}
               currentTime={currentTime}
               onSelectLine={setSelectedLineId}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AudioLines, ChevronLeft, ChevronRight, Crosshair } from "lucide-react";
 import type { LyricLine } from "@/types/lyrics";
 
@@ -31,9 +31,25 @@ export function BeatGridTimeline({
 }: BeatGridTimelineProps) {
   const maxStart = Math.max(0, duration - WINDOW_SECONDS);
   const [windowStart, setWindowStart] = useState(0);
+  const manualNavigation = useRef(false);
+  const previousPlaybackTime = useRef(currentTime);
 
   useEffect(() => {
-    if (currentTime < windowStart || currentTime > windowStart + WINDOW_SECONDS) {
+    const previousTime = previousPlaybackTime.current;
+    previousPlaybackTime.current = currentTime;
+    const windowEnd = windowStart + WINDOW_SECONDS;
+
+    // Let a manually chosen section stay put. Resume following after playback
+    // passes through that section, or when the user chooses Now.
+    if (manualNavigation.current) {
+      if (currentTime > previousTime && previousTime <= windowEnd && currentTime > windowEnd) {
+        manualNavigation.current = false;
+        setWindowStart(Math.min(maxStart, Math.max(0, currentTime - WINDOW_SECONDS / 2)));
+      }
+      return;
+    }
+
+    if (currentTime < windowStart || currentTime > windowEnd) {
       setWindowStart(Math.min(maxStart, Math.max(0, currentTime - WINDOW_SECONDS / 2)));
     }
   }, [currentTime, maxStart, windowStart]);
@@ -43,12 +59,26 @@ export function BeatGridTimeline({
     const last = Math.min(Math.floor(windowStart + WINDOW_SECONDS), Math.ceil(duration));
     return Array.from({ length: Math.max(0, last - first + 1) }, (_, i) => first + i);
   }, [duration, windowStart]);
-  const visibleBeats = beats.filter((beat) => beat >= windowStart && beat <= windowStart + WINDOW_SECONDS);
-  const visibleLines = lines.filter((line) => line.end >= windowStart && line.start <= windowStart + WINDOW_SECONDS);
+  const visibleBeats = useMemo(
+    () => beats.filter((beat) => beat >= windowStart && beat <= windowStart + WINDOW_SECONDS),
+    [beats, windowStart],
+  );
+  const visibleLines = useMemo(
+    () => lines.filter((line) => line.end >= windowStart && line.start <= windowStart + WINDOW_SECONDS),
+    [lines, windowStart],
+  );
   const selectedLine = lines.find((line) => line.id === selectedLineId);
 
   const percent = (time: number) => Math.max(0, Math.min(100, ((time - windowStart) / WINDOW_SECONDS) * 100));
-  const shiftWindow = (delta: number) => setWindowStart((start) => Math.max(0, Math.min(maxStart, start + delta)));
+  const setManualWindow = (start: number) => {
+    manualNavigation.current = true;
+    setWindowStart(Math.max(0, Math.min(maxStart, start)));
+  };
+  const shiftWindow = (delta: number) => setManualWindow(windowStart + delta);
+  const seekTo = (time: number) => {
+    manualNavigation.current = false;
+    onSeek(time);
+  };
 
   return (
     <section className="glass-panel rounded-2xl p-4 sm:p-5" aria-label="Beat grid timeline">
@@ -57,7 +87,7 @@ export function BeatGridTimeline({
           <span className="inline-flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary"><AudioLines className="size-4" /></span>
           <div>
             <h2 className="font-display text-lg">Beat grid</h2>
-            <p className="text-xs text-muted-foreground">Select a lyric, then tap a beat to place its start.</p>
+            <p className="text-xs text-muted-foreground">Use the slider or arrows to find a lyric, then tap a beat to place its start.</p>
           </div>
         </div>
         <div className="flex items-baseline gap-2 rounded-full border border-glass-border bg-background/40 px-3 py-1.5">
@@ -75,19 +105,19 @@ export function BeatGridTimeline({
           max={maxStart}
           step={0.1}
           value={Math.min(windowStart, maxStart)}
-          onChange={(event) => setWindowStart(Number(event.target.value))}
+          onChange={(event) => setManualWindow(Number(event.target.value))}
           className="h-1 w-full cursor-pointer accent-primary"
           aria-label="Timeline section"
         />
         <button type="button" onClick={() => shiftWindow(WINDOW_SECONDS / 2)} className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-glass-border text-muted-foreground hover:bg-glass hover:text-foreground" aria-label="Next timeline section"><ChevronRight className="size-4" /></button>
-        <button type="button" onClick={() => setWindowStart(Math.min(maxStart, Math.max(0, currentTime - WINDOW_SECONDS / 2)))} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-glass-border px-2 text-[10px] text-muted-foreground hover:bg-glass hover:text-foreground" aria-label="Center timeline on playback"><Crosshair className="size-3" /> Now</button>
+        <button type="button" onClick={() => { manualNavigation.current = false; setWindowStart(Math.min(maxStart, Math.max(0, currentTime - WINDOW_SECONDS / 2))); }} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-glass-border px-2 text-[10px] text-muted-foreground hover:bg-glass hover:text-foreground" aria-label="Center timeline on playback"><Crosshair className="size-3" /> Now</button>
       </div>
 
       <div className="mt-2 overflow-x-auto pb-1">
         <div className="min-w-[640px]">
           <div className="relative h-7 border-b border-glass-border/70">
             {ticks.map((tick) => (
-              <button key={tick} type="button" onClick={() => onSeek(tick)} className="absolute bottom-0 -translate-x-1/2 text-[9px] tabular-nums text-muted-foreground hover:text-primary" style={{ left: `${percent(tick)}%` }}>{Math.floor(tick / 60)}:{String(tick % 60).padStart(2, "0")}</button>
+              <button key={tick} type="button" onClick={() => seekTo(tick)} className="absolute bottom-0 -translate-x-1/2 text-[9px] tabular-nums text-muted-foreground hover:text-primary" style={{ left: `${percent(tick)}%` }}>{Math.floor(tick / 60)}:{String(tick % 60).padStart(2, "0")}</button>
             ))}
           </div>
 
