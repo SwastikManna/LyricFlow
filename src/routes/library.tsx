@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { AudioLines, Play, Trash2, Plus, Pencil } from "lucide-react";
+import { AudioLines, Play, Trash2, Plus, Grid3X3 } from "lucide-react";
 import { AlbumArtwork } from "@/components/AlbumArtwork";
 import { deleteSong, listSongs } from "@/api/songs";
 import { formatTime } from "@/hooks/useAudioPlayer";
@@ -25,7 +25,9 @@ export const Route = createFileRoute("/library")({
 });
 
 function statusLabel(song: LibrarySong) {
-  if (song.processingStatus === "READY") return `${song.lineCount} lyric lines`;
+  if (song.processingStatus === "READY") {
+    return `${song.lineCount} lyric lines${song.bpm ? ` · ${song.bpm} BPM` : ""}`;
+  }
   if (song.processingStatus === "FAILED") return "Lyrics unavailable";
   return "Not analyzed yet";
 }
@@ -116,9 +118,10 @@ function LibraryPage() {
                     to="/edit/$songId"
                     params={{ songId: song.id }}
                     className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-glass hover:text-foreground"
-                    aria-label={`Edit lyrics for ${song.title}`}
+                    aria-label={`Open beat grid and edit lyrics for ${song.title}`}
+                    title={song.bpm ? `Beat grid · ${song.bpm} BPM` : "Open beat grid"}
                   >
-                    <Pencil className="size-4" />
+                    <Grid3X3 className="size-4" />
                   </Link>
                 )}
                 <button

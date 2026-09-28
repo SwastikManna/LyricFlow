@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { LyricLine } from "./LyricLine";
+import { LyricLine, type LyricsDisplayMode } from "./LyricLine";
 import { useLyricsSync } from "@/hooks/useLyricsSync";
 import type { SyncedLyrics } from "@/types/lyrics";
 
@@ -7,10 +7,12 @@ interface LyricsDisplayProps {
   lyrics: SyncedLyrics | null;
   subscribeTime: (listener: (time: number) => void) => () => void;
   onSeek: (time: number) => void;
+  translationLanguage: string;
+  displayMode: LyricsDisplayMode;
 }
 
 /** Auto-scrolling live lyrics. The active line glides toward the centre. */
-export function LyricsDisplay({ lyrics, subscribeTime, onSeek }: LyricsDisplayProps) {
+export function LyricsDisplay({ lyrics, subscribeTime, onSeek, translationLanguage, displayMode }: LyricsDisplayProps) {
   const { activeIndex } = useLyricsSync({ lyrics, subscribeTime });
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lineRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -43,6 +45,8 @@ export function LyricsDisplay({ lyrics, subscribeTime, onSeek }: LyricsDisplayPr
           <LyricLine
             line={line}
             isActive={index === activeIndex}
+            translationLanguage={translationLanguage}
+            displayMode={displayMode}
             distance={Math.abs(index - (activeIndex < 0 ? 0 : activeIndex))}
             onSeek={onSeek}
             subscribeTime={index === activeIndex ? subscribeTime : undefined}

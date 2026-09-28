@@ -34,6 +34,7 @@ export function normalizeLyrics(
     start = Math.max(0, Math.min(start, max));
     if (!Number.isFinite(end) || end <= start) end = start + 3;
     end = Math.min(end, max);
+    if (end <= start) continue;
     const prev = lines[lines.length - 1];
     if (prev && start < prev.end) prev.end = Math.max(prev.start + 0.2, start);
 
@@ -42,6 +43,8 @@ export function normalizeLyrics(
           .map((w) => ({ text: String(w.text ?? "").trim(), start: num(w.start), end: num(w.end) }))
           .filter((w) => w.text && Number.isFinite(w.start) && Number.isFinite(w.end) && w.end > w.start)
           .map((w) => ({ ...w, start: Math.max(start, w.start), end: Math.min(end, w.end) }))
+          .filter((w) => w.end > w.start)
+          .sort((a, b) => a.start - b.start)
       : [];
     if (words.length === 0) words = spreadWords(text, start, end);
 

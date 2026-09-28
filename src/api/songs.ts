@@ -116,11 +116,11 @@ export interface ProcessingStage {
 
 export const PROCESSING_STAGES: ProcessingStage[] = [
   { key: "upload", label: "Uploading audio", doneLabel: "Audio uploaded", status: "UPLOADED", progress: 12, durationMs: 500 },
-  { key: "extract", label: "Extracting audio", doneLabel: "Audio extracted", status: "PROCESSING", progress: 30, durationMs: 800 },
-  { key: "vocals", label: "Analyzing vocals", doneLabel: "Vocals isolated", status: "PROCESSING", progress: 48, durationMs: 800 },
-  { key: "transcribe", label: "Transcribing lyrics", doneLabel: "Lyrics detected", status: "TRANSCRIBING", progress: 70, durationMs: 0 },
-  { key: "align", label: "Synchronizing timestamps", doneLabel: "Lyrics synchronized", status: "ALIGNING", progress: 90, durationMs: 600 },
-  { key: "finalize", label: "Finalizing", doneLabel: "Ready to play", status: "READY", progress: 100, durationMs: 400 },
+  { key: "inspect", label: "Reading audio", doneLabel: "Audio ready", status: "PROCESSING", progress: 24, durationMs: 300 },
+  { key: "transcribe", label: "Transcribing with AI", doneLabel: "Lyrics timestamped", status: "TRANSCRIBING", progress: 68, durationMs: 0 },
+  { key: "beat", label: "Tracking the beat", doneLabel: "Beat grid detected", status: "PROCESSING", progress: 82, durationMs: 0 },
+  { key: "align", label: "Aligning lyrics to the song", doneLabel: "Lyrics synchronized", status: "ALIGNING", progress: 94, durationMs: 0 },
+  { key: "finalize", label: "Finalizing", doneLabel: "Ready to play", status: "READY", progress: 100, durationMs: 300 },
 ];
 
 /** Runs AI transcription for a saved song while stepping through the stages. */
@@ -138,17 +138,24 @@ export async function processSong(
     .then((buf) => (buf ? detectBeats(buf) : null))
     .catch(() => null);
   let lyrics: SyncedLyrics | null = null;
+  let grid: Awaited<typeof beats> = null;
   for (let i = 0; i < PROCESSING_STAGES.length; i++) {
     const stage = PROCESSING_STAGES[i]!;
     if (signal?.aborted) throw new DOMException("Processing cancelled", "AbortError");
     onStage?.(i, { songId: id, processingStatus: stage.status, progress: stage.progress, stage: stage.label });
     if (stage.key === "transcribe") lyrics = await transcription;
+    else if (stage.key === "beat") grid = await beats;
     else if (stage.key === "align" && lyrics) {
-      const grid = await beats;
       if (grid && grid.confidence > 0.05) {
         const aligned = alignLyricsToBeats(lyrics, grid);
         await saveAlignedLyricsFn({
-          data: { id, deviceId: getDeviceId(), lyrics: aligned, bpm: grid.bpm },
+          data: {
+            id,
+            deviceId: getDeviceId(),
+            lyrics: { ...aligned, beatGrid: grid },
+            bpm: grid.bpm,
+            beatGrid: grid,
+          },
         }).catch(() => {});
       }
       await wait(stage.durationMs);

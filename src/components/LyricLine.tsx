@@ -3,9 +3,13 @@ import { cn } from "@/lib/utils";
 import { LyricWord } from "./LyricWord";
 import type { LyricLine as LyricLineType } from "@/types/lyrics";
 
+export type LyricsDisplayMode = "dual" | "translated" | "original";
+
 interface LyricLineProps {
   line: LyricLineType;
   isActive: boolean;
+  translationLanguage: string;
+  displayMode: LyricsDisplayMode;
   /** Distance from the active line; used to fade far-away lines. */
   distance: number;
   onSeek: (time: number) => void;
@@ -13,21 +17,24 @@ interface LyricLineProps {
   subscribeTime?: ((listener: (time: number) => void) => () => void) | undefined;
 }
 
-export function LyricLine({ line, isActive, distance, onSeek, subscribeTime }: LyricLineProps) {
+export function LyricLine({ line, isActive, distance, onSeek, subscribeTime, translationLanguage, displayMode }: LyricLineProps) {
   const [time, setTime] = useState(line.start);
   const frame = useRef(0);
 
   useEffect(() => {
-    if (!isActive || !subscribeTime) return;
+    if (!isActive || !subscribeTime || displayMode === "translated") return;
     return subscribeTime((t) => {
       // Throttle to ~20fps: karaoke reveal does not need every frame.
       frame.current = (frame.current + 1) % 3;
       if (frame.current === 0) setTime(t);
     });
-  }, [isActive, subscribeTime]);
+  }, [displayMode, isActive, subscribeTime]);
 
   const opacity = isActive ? 1 : Math.max(0.14, 0.5 - distance * 0.09);
   const hasWords = Boolean(line.words?.length);
+  const translation = line.translations?.[translationLanguage]?.trim();
+  const showTranslation = displayMode !== "original" && Boolean(translation) && translation?.toLocaleLowerCase() !== line.text.trim().toLocaleLowerCase();
+  const showOriginal = displayMode !== "translated" || !translation;
 
   return (
     <button
@@ -42,22 +49,29 @@ export function LyricLine({ line, isActive, distance, onSeek, subscribeTime }: L
       )}
       style={{ opacity, transformOrigin: "left center" }}
     >
-      {isActive && hasWords ? (
-        <span>
-          {line.words!.map((word, i) => {
-            const span = Math.max(0.001, word.end - word.start);
-            return (
-              <LyricWord
-                key={`${line.id}-w${i}`}
-                word={word}
-                progress={(time - word.start) / span}
-              />
-            );
-          })}
-        </span>
-      ) : (
-        <span className={isActive ? "text-foreground" : undefined}>{line.text}</span>
-      )}
+      <span className="block">
+        {showOriginal && (isActive && hasWords ? (
+          <span>
+            {line.words!.map((word, i) => {
+              const span = Math.max(0.001, word.end - word.start);
+              return (
+                <LyricWord
+                  key={`${line.id}-w${i}`}
+                  word={word}
+                  progress={(time - word.start) / span}
+                />
+              );
+            })}
+          </span>
+        ) : (
+          <span className={isActive ? "text-foreground" : undefined}>{line.text}</span>
+        ))}
+        {showTranslation && (
+          <span className={`mt-1 block animate-in fade-in-0 duration-300 font-normal leading-snug tracking-normal transition-opacity ${displayMode === "translated" ? "font-display text-[1em] text-foreground" : "font-sans text-[0.55em] text-muted-foreground"} ${isActive ? "opacity-90" : "opacity-75"}`}>
+            {translation}
+          </span>
+        )}
+      </span>
     </button>
   );
 }

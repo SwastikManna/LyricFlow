@@ -10,18 +10,25 @@ export interface LyricLine {
   start: number;
   end: number;
   words?: LyricWord[];
+  /** Human or AI translations, keyed by BCP-47 language code. */
+  translations?: Record<string, string>;
 }
 
 export interface SyncedLyrics {
   language: string;
   lines: LyricLine[];
+  beatGrid?: {
+    bpm: number;
+    beats: number[];
+    confidence: number;
+  };
 }
 
 export interface Lyrics {
   id: string;
   songId: string;
   language: string;
-  /** Where the lyrics came from: mock generator today, AI transcription later. */
+  /** Whether the lyrics came from the AI transcription or were edited manually. */
   source: "MOCK" | "AI_TRANSCRIPTION" | "MANUAL";
   synchronizedLyrics: SyncedLyrics;
 }

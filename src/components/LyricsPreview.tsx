@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { previewLyrics } from "@/lib/mock-transcription";
+import { previewLyrics } from "@/lib/preview-lyrics";
 
 /** Decorative, self-driving lyric preview for the landing hero. */
 export function LyricsPreview() {

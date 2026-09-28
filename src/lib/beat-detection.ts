@@ -3,8 +3,9 @@ import type { LyricLine, SyncedLyrics } from "@/types/lyrics";
 /**
  * Browser-side beat detection (Web Audio API) and lyric re-alignment.
  *
- * 1. Decode the audio, build a spectral-flux-like onset envelope.
- * 2. Estimate tempo by autocorrelating the envelope (70–180 BPM).
+ * 1. Decode the audio and build an energy-onset envelope.
+ * 2. Estimate tempo from the strongest normalized autocorrelation in the
+ *    musical range (40–240 BPM), without assuming a preferred click tempo.
  * 3. Pick the beat phase that best matches the onsets and build a beat grid.
  * 4. Snap each lyric line to the nearest beat (within a tolerance) and
  *    re-map its word timings proportionally into the new line span.
@@ -66,25 +67,28 @@ export async function detectBeats(data: ArrayBuffer): Promise<BeatGrid | null> {
   }
 
   const fps = sr / HOP;
-  const minLag = Math.floor((60 / 180) * fps);
-  const maxLag = Math.ceil((60 / 70) * fps);
+  const minLag = Math.floor((60 / 240) * fps);
+  const maxLag = Math.ceil((60 / 40) * fps);
   let bestLag = 0;
   let bestScore = -1;
-  let total = 0;
-  for (let f = 0; f < frames; f++) total += onset[f]! * onset[f]!;
   for (let lag = minLag; lag <= maxLag; lag++) {
     let s = 0;
-    for (let f = lag; f < frames; f++) s += onset[f]! * onset[f - lag]!;
-    // Mild preference for ~120 BPM to avoid octave errors.
-    const bpm = (60 * fps) / lag;
-    const w = Math.exp(-0.5 * Math.pow(Math.log2(bpm / 120) / 1.0, 2));
-    s *= w;
-    if (s > bestScore) {
-      bestScore = s;
+    let energyA = 0;
+    let energyB = 0;
+    for (let f = lag; f < frames; f++) {
+      const a = onset[f]!;
+      const b = onset[f - lag]!;
+      s += a * b;
+      energyA += a * a;
+      energyB += b * b;
+    }
+    const score = energyA && energyB ? s / Math.sqrt(energyA * energyB) : 0;
+    if (score > bestScore) {
+      bestScore = score;
       bestLag = lag;
     }
   }
-  if (!bestLag || total === 0) return null;
+  if (!bestLag || bestScore <= 0) return null;
 
   // Best phase for that period.
   let bestPhase = 0;
@@ -102,7 +106,7 @@ export async function detectBeats(data: ArrayBuffer): Promise<BeatGrid | null> {
   const beats: number[] = [];
   for (let t = (bestPhase * HOP + FRAME / 2) / sr; t < buffer.duration; t += period) beats.push(Number(t.toFixed(3)));
 
-  const confidence = Math.max(0, Math.min(1, bestScore / total));
+  const confidence = Math.max(0, Math.min(1, bestScore));
   return { bpm: Math.round(60 / period), beats, confidence };
 }
 

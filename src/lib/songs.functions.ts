@@ -8,6 +8,7 @@ const SongInput = DeviceInput.extend({ id: z.string().uuid() });
 
 export interface LibrarySong extends Song {
   lineCount: number;
+  bpm: number | null;
 }
 
 export const listSongsFn = createServerFn({ method: "POST" })
@@ -25,6 +26,9 @@ export const listSongsFn = createServerFn({ method: "POST" })
     return ((rows ?? []) as import("./songs.server").SongRow[]).map((r) => ({
       ...toSong(r, ""),
       lineCount: (r.lyrics as { lines?: unknown[] } | null)?.lines?.length ?? 0,
+      bpm: (r.lyrics as { bpm?: number; beatGrid?: { bpm?: number } } | null)?.beatGrid?.bpm
+        ?? (r.lyrics as { bpm?: number } | null)?.bpm
+        ?? null,
     }));
   });
 
@@ -79,14 +83,26 @@ const LineSchema = z.object({
   start: z.number(),
   end: z.number(),
   words: z.array(WordSchema).max(200).optional(),
+  translations: z.record(z.string().max(35), z.string().max(4000)).optional(),
+});
+const BeatGridSchema = z.object({
+  bpm: z.number().min(30).max(300),
+  beats: z.array(z.number().nonnegative()).max(20_000),
+  confidence: z.number().min(0).max(1),
+});
+const LyricsSchema = z.object({
+  language: z.string().max(20),
+  lines: z.array(LineSchema).max(2000),
+  beatGrid: BeatGridSchema.optional(),
 });
 
 /** Saves re-aligned (beat-synced) lyrics for a song. */
 export const saveAlignedLyricsFn = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     SongInput.extend({
-      lyrics: z.object({ language: z.string().max(20), lines: z.array(LineSchema).max(2000) }),
+      lyrics: LyricsSchema,
       bpm: z.number().nullable(),
+      beatGrid: BeatGridSchema.nullable().optional(),
     }).parse(d),
   )
   .handler(async ({ data }) => {
@@ -96,7 +112,7 @@ export const saveAlignedLyricsFn = createServerFn({ method: "POST" })
     const db = await admin();
     const { error } = await db
       .from("songs" as never)
-      .update({ lyrics: { ...data.lyrics, bpm: data.bpm } } as never)
+      .update({ lyrics: { ...data.lyrics, bpm: data.bpm, beatGrid: data.beatGrid ?? undefined } } as never)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -106,7 +122,7 @@ export const saveAlignedLyricsFn = createServerFn({ method: "POST" })
 export const saveEditedLyricsFn = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     SongInput.extend({
-      lyrics: z.object({ language: z.string().max(20), lines: z.array(LineSchema).max(2000) }),
+      lyrics: LyricsSchema,
     }).parse(d),
   )
   .handler(async ({ data }) => {
