@@ -4,7 +4,7 @@ import { ArrowRight, AudioLines, Disc3, Play } from "lucide-react";
 import { listSongs } from "@/api/songs";
 import { formatTime } from "@/hooks/useAudioPlayer";
 import type { LibrarySong } from "@/lib/songs.functions";
-import { LyricsPreview } from "@/components/LyricsPreview";
+import { LatestSongMiniPlayer } from "@/components/LatestSongMiniPlayer";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -84,30 +84,7 @@ function Home() {
           <div className="pointer-events-none absolute -inset-3 rounded-[42%] border border-primary/[0.08]" />
           <div className="absolute h-[300px] w-[300px] rounded-full border border-primary/10 sm:h-[420px] sm:w-[420px]" />
           <div className="animate-orbit absolute h-[390px] w-[390px] rounded-full border border-primary/[0.06] sm:h-[520px] sm:w-[520px]" />
-          <div className="animate-lyric-float relative w-full max-w-[480px]">
-          <span className="absolute -right-1 -top-8 font-mono-ui text-[9px] uppercase tracking-[0.22em] text-foreground/35 sm:right-3">01 / 06</span>
-          <div className="glass-panel relative overflow-hidden rounded-[2rem] p-5 shadow-lift sm:p-9">
-            <div className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full bg-accent/10 blur-3xl" />
-            <div className="flex items-center justify-between border-b border-glass-border/80 pb-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex size-8 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-primary"><AudioLines className="size-3.5" /></span>
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">Live lyrics</p>
-                  <p className="mt-1 text-[10px] text-muted-foreground">Finding the shape of sound</p>
-                </div>
-              </div>
-              <span className="flex items-center gap-2 font-mono-ui text-[9px] uppercase tracking-[0.14em] text-foreground/40"><span className="animate-signal-pulse size-1.5 rounded-full bg-primary" /> Sync</span>
-            </div>
-            <div className="relative mt-6">
-              <LyricsPreview />
-            </div>
-            <div className="relative mt-8 flex items-center gap-4 font-mono-ui text-[9px] text-foreground/45"><span>00:06</span><div className="h-px flex-1 bg-foreground/15"><div className="h-px w-[22%] bg-primary" /></div><span>00:28</span></div>
-          </div>
-          <Link to="/library" className="absolute -bottom-5 -left-3 inline-flex items-center gap-3 rounded-full border border-glass-border bg-card/80 px-4 py-2.5 font-mono-ui text-[9px] uppercase tracking-[0.17em] text-foreground/55 shadow-lg backdrop-blur-xl transition-colors hover:text-foreground sm:-left-5">
-            <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground"><Play className="ml-0.5 size-2.5 fill-current" /></span>
-            Press play / feel time
-          </Link>
-          </div>
+          <LatestSongMiniPlayer song={songs[0] ?? null} />
         </div>
       </section>
 
