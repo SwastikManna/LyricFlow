@@ -4,7 +4,7 @@ import { previewLyrics } from "@/lib/mock-transcription";
 
 /** Decorative, self-driving lyric preview for the landing hero. */
 export function LyricsPreview() {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(1);
 
   useEffect(() => {
     const id = setInterval(() => setIndex((i) => (i + 1) % previewLyrics.lines.length), 2600);
@@ -12,15 +12,15 @@ export function LyricsPreview() {
   }, []);
 
   return (
-    <div aria-hidden className="fade-mask-y select-none space-y-2 overflow-hidden py-2">
+    <div aria-hidden className="select-none space-y-5 overflow-hidden py-2 sm:space-y-6">
       {previewLyrics.lines.map((line, i) => (
         <p
           key={line.id}
           className={cn(
-            "font-display text-lg leading-snug transition-all duration-700 sm:text-xl",
+            "font-display leading-tight transition-all duration-700",
             i === index
-              ? "scale-[1.02] font-semibold text-primary opacity-100"
-              : "font-medium text-foreground opacity-25",
+              ? "max-w-[360px] scale-[1.02] text-2xl text-foreground sm:text-4xl"
+              : "text-xl text-foreground/25 sm:text-3xl",
           )}
           style={{ transformOrigin: "left center" }}
         >

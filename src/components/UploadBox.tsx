@@ -43,7 +43,10 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
         }}
         onClick={() => !file && inputRef.current?.click()}
         className={cn(
-          "glass-panel group relative flex flex-col items-center justify-center rounded-3xl text-center transition-all duration-300",
+          "glass-panel group relative flex flex-col items-center justify-center text-center transition-all duration-300",
+          compact
+            ? "rounded-xl border-dashed border-primary/40 bg-card/40"
+            : "rounded-3xl",
           compact ? "px-6 py-10" : "px-6 py-16 sm:py-24",
           !file && "cursor-pointer hover:border-primary/50",
           isOver && "border-primary/70 bg-primary/10 scale-[1.01]",
@@ -59,17 +62,17 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
 
         {!file ? (
           <>
-            <span className="relative mb-5 inline-flex size-16 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <span className={cn("relative inline-flex items-center justify-center rounded-full bg-primary/15 text-primary", compact ? "mb-3 size-11" : "mb-5 size-16")}>
               <span className="absolute inset-0 rounded-full bg-primary/25 animate-pulse-ring" />
-              <UploadCloud className="size-7" />
+              <UploadCloud className={compact ? "size-5" : "size-7"} />
             </span>
             <p className={cn("font-display font-semibold", compact ? "text-lg" : "text-2xl")}>
               Drop your track here
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className={cn("text-muted-foreground", compact ? "mt-1 text-xs" : "mt-2 text-sm")}>
               or click to browse your files
             </p>
-            <p className="mt-6 text-xs uppercase tracking-[0.3em] text-muted-foreground/70">
+            <p className={cn("text-xs uppercase tracking-[0.3em] text-muted-foreground/70", compact ? "mt-4" : "mt-6")}>
               MP3 • MP4 • WAV • M4A
             </p>
             <button
@@ -78,7 +81,7 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
                 e.stopPropagation();
                 inputRef.current?.click();
               }}
-              className="mt-6 rounded-full border border-glass-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-glass"
+              className={cn("rounded-full border border-glass-border px-6 text-sm font-medium text-foreground transition-colors hover:bg-glass", compact ? "mt-4 py-2" : "mt-6 py-2.5")}
             >
               Browse files
             </button>

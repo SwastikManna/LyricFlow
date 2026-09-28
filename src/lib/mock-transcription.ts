@@ -83,9 +83,8 @@ export function generateMockLyrics(songId: string, duration: number): SyncedLyri
 export const previewLyrics: SyncedLyrics = {
   language: "en",
   lines: [
-    { id: "p1", text: "City lights are bleeding into the rain", start: 0, end: 3.2 },
-    { id: "p2", text: "I hear your name inside the quiet of the train", start: 3.2, end: 6.6 },
-    { id: "p3", text: "Every streetlight keeps a secret of its own", start: 6.6, end: 10 },
-    { id: "p4", text: "We were young and made of neon and bone", start: 10, end: 13.4 },
+    { id: "p1", text: "Every little echo finds a place", start: 0, end: 3.2 },
+    { id: "p2", text: "Close your eyes, let the feeling begin", start: 3.2, end: 6.6 },
+    { id: "p3", text: "Follow the feeling through the night", start: 6.6, end: 10 },
   ],
 };
