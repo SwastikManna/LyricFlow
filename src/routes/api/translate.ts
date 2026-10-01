@@ -144,41 +144,34 @@ export const Route = createFileRoute("/api/translate")({
         }
         const translations: Record<string, string> = {};
         for (const line of lines) {
-          const lineId = line.id as string;
-          const value = byId.get(lineId);
+          const value = byId.get(line.id);
           if (!value) return json({ error: "The AI didn't return a translation for every lyric line." }, 502);
-          translations[lineId] = value;
+          translations[line.id] = value;
         }
 
         // Re-read before saving so a translation request cannot overwrite lyric edits made while the AI was working.
         const latestRow = await getOwnedRow(id, deviceId);
         const latestLyrics = latestRow?.lyrics as { lines?: unknown[] } | null;
         const latestLines = Array.isArray(latestLyrics?.lines)
-          ? latestLyrics.lines.filter((line): line is Record<string, unknown> =>
-              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>).id === "string"),
-            )
+          ? latestLyrics.lines.filter(isRawLine)
           : [];
-        const originalById = new Map(lines.map((line) => [line.id as string, line]));
-        const latestById = new Map(latestLines.map((line) => [line.id as string, line]));
+        const latestById = new Map(latestLines.map((line) => [line.id, line]));
         const lyricSetChanged = lines.length !== latestLines.length || lines.some((line) => {
-          const latest = latestById.get(line.id as string);
-          const oldTranslations = line.translations as Record<string, unknown> | undefined;
-          const currentTranslations = latest?.translations as Record<string, unknown> | undefined;
-          return !latest || latest.text !== line.text || currentTranslations?.[targetLanguage] !== oldTranslations?.[targetLanguage];
+          const latest = latestById.get(line.id);
+          const oldTranslations = asTranslations(line.translations);
+          const currentTranslations = asTranslations(latest?.translations);
+          return !latest || latest.text !== line.text || currentTranslations[targetLanguage] !== oldTranslations[targetLanguage];
         });
         if (lyricSetChanged || !latestRow) {
           return json({ error: "The lyrics changed during translation. Please retry so the new version is translated." }, 409);
         }
-        const updatedLines = latestLines.map((line) => {
-          const source = originalById.get(line.id as string)!;
-          return {
-            ...line,
-            translations: {
-              ...((line.translations && typeof line.translations === "object") ? line.translations as Record<string, string> : {}),
-              [targetLanguage]: translations[source.id as string],
-            },
-          };
-        });
+        const updatedLines = latestLines.map((line) => ({
+          ...line,
+          translations: {
+            ...asTranslations(line.translations),
+            [targetLanguage]: translations[line.id]!,
+          },
+        }));
         const db = await admin();
         const { error } = await db
           .from("songs" as never)
