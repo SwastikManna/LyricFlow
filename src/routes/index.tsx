@@ -22,11 +22,40 @@ export const Route = createFileRoute("/")({
         content:
           "Upload MP3, MP4, WAV or M4A and follow synchronized lyrics as your song plays.",
       },
-      { name: "twitter:card", content: "summary" },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://lyricflow-swastik.lovable.app/" },
+      { property: "og:image", content: "https://lyricflow-swastik.lovable.app/og-image.jpg" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "LyricFlow — Living lyrics for your music" },
       {
         name: "twitter:description",
         content: "Follow your songs with synchronized lyrics, phonetic writing and beat-aware timing.",
+      },
+      { name: "twitter:image", content: "https://lyricflow-swastik.lovable.app/og-image.jpg" },
+    ],
+    links: [{ rel: "canonical", href: "https://lyricflow-swastik.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          name: "LyricFlow",
+          url: "https://lyricflow-swastik.lovable.app/",
+          description:
+            "LyricFlow transcribes an uploaded song, synchronizes its lyrics to the beat and plays them word by word in a cinematic live-lyrics player.",
+          applicationCategory: "MultimediaApplication",
+          operatingSystem: "All",
+          image: "https://lyricflow-swastik.lovable.app/og-image.jpg",
+          featureList: [
+            "Automatic lyric transcription from uploaded audio",
+            "Word-by-word synchronized lyrics",
+            "Beat detection and tempo alignment",
+            "Line-by-line lyrics editor",
+            "Personal song library",
+          ],
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        }),
       },
     ],
   }),
