@@ -83,7 +83,7 @@ export const Route = createFileRoute("/api/translate")({
           title: String(row.title ?? "Unknown title").slice(0, 300),
           artist: String(row.artist ?? "Unknown artist").slice(0, 300),
           originalLanguage: String(savedLyrics?.language ?? "unknown").slice(0, 35),
-          lyrics: lines.map((line) => ({ id: line.id, text: line.text })),
+          lyrics: lines.map((line) => ({ id: line.id, text: String(line.text) })),
         });
 
         let upstream: Response;
