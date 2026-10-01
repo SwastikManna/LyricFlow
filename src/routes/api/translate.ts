@@ -2,6 +2,26 @@ import { createFileRoute } from "@tanstack/react-router";
 import { languageName } from "@/lib/languages";
 
 const MODEL = "google/gemini-3.8-flash";
+
+type RawLine = {
+  id: string;
+  text?: unknown;
+  translations?: unknown;
+} & Record<string, unknown>;
+
+function isRawLine(line: unknown): line is RawLine {
+  if (!line || typeof line !== "object") return false;
+  return typeof (line as Record<string, unknown>)["id"] === "string";
+}
+
+function asTranslations(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object") return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof v === "string") out[k] = v;
+  }
+  return out;
+}
 const LANGUAGE_CODE = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/;
 
 function json(body: unknown, status = 200) {
