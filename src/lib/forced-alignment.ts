@@ -141,7 +141,7 @@ export async function forceAlignLyricsToAudio({
     method: "POST",
     headers: { "xi-api-key": apiKey },
     body: form,
-    signal,
+    ...(signal ? { signal } : {}),
   });
   if (!response.ok) {
     throw new Error(`Word alignment service returned ${response.status}.`);

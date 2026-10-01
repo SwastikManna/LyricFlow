@@ -70,13 +70,12 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
       const translations = await translateSavedSong(song.id, getDeviceId(), translationLanguage);
       setPlayerLyrics((current) => current ? {
         ...current,
-        lines: current.lines.map((line) => ({
-          ...line,
-          translations: {
-            ...line.translations,
-            ...(translations[line.id] ? { [translationLanguage]: translations[line.id] } : {}),
-          },
-        })),
+        lines: current.lines.map((line) => {
+          const translation = translations[line.id];
+          return translation
+            ? { ...line, translations: { ...line.translations, [translationLanguage]: translation } }
+            : line;
+        }),
       } : current);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Translation failed. Please try again.");

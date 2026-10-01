@@ -31,12 +31,12 @@ export const Route = createFileRoute("/api/romanize")({
         const savedLyrics = row.lyrics as { language?: string; lines?: unknown[] } | null;
         const lines = Array.isArray(savedLyrics?.lines)
           ? savedLyrics.lines.filter((line): line is Record<string, unknown> =>
-              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>).id === "string" && typeof (line as Record<string, unknown>).text === "string"),
+              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>)["id"] === "string" && typeof (line as Record<string, unknown>)["text"] === "string"),
             )
           : [];
         if (!lines.length || lines.length > 2000) return json({ error: "This song has no lyric lines to romanize." }, 422);
 
-        const cached = Object.fromEntries(lines.map((line) => [line.id as string, typeof line.romanization === "string" ? line.romanization.trim() : ""]));
+        const cached = Object.fromEntries(lines.map((line) => [line["id"] as string, typeof line["romanization"] === "string" ? (line["romanization"] as string).trim() : ""]));
         if (Object.values(cached).every(Boolean)) return json({ romanizations: cached, cached: true });
 
         const instruction = `Write a phonetic transliteration of the lyrics in the Latin alphabet, using easy-to-read spellings familiar to English readers. Keep the original language, words, meaning, and line order exactly the same; do NOT translate the lyrics into English. For example, Hindi "देखो देखो" should become "dekho dekho", not "look, look". Keep exactly one result for every input line and preserve each id exactly. Return only JSON: {"romanizations":[{"id":"original-id","text":"phonetic words in Latin letters"}]}.`;
@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/romanize")({
           title: String(row.title ?? "Unknown title").slice(0, 300),
           artist: String(row.artist ?? "Unknown artist").slice(0, 300),
           language: String(savedLyrics?.language ?? "unknown").slice(0, 35),
-          lyrics: lines.map((line) => ({ id: line.id, text: line.text })),
+          lyrics: lines.map((line) => ({ id: line["id"], text: line["text"] })),
         });
 
         let upstream: Response;
@@ -88,9 +88,9 @@ export const Route = createFileRoute("/api/romanize")({
         }
         const romanizations: Record<string, string> = {};
         for (const line of lines) {
-          const value = byId.get(line.id as string);
+          const value = byId.get(line["id"] as string);
           if (!value) return json({ error: "The AI didn't return a romanized version for every line." }, 502);
-          romanizations[line.id as string] = value;
+          romanizations[line["id"] as string] = value;
         }
 
         // Re-read before saving to preserve edits made while the model was running.
@@ -98,20 +98,20 @@ export const Route = createFileRoute("/api/romanize")({
         const latestLyrics = latestRow?.lyrics as { lines?: unknown[] } | null;
         const latestLines = Array.isArray(latestLyrics?.lines)
           ? latestLyrics.lines.filter((line): line is Record<string, unknown> =>
-              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>).id === "string"),
+              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>)["id"] === "string"),
             )
           : [];
-        const originalById = new Map(lines.map((line) => [line.id as string, line]));
-        const latestById = new Map(latestLines.map((line) => [line.id as string, line]));
+        const originalById = new Map(lines.map((line) => [line["id"] as string, line]));
+        const latestById = new Map(latestLines.map((line) => [line["id"] as string, line]));
         const changed = lines.length !== latestLines.length || lines.some((line) => {
-          const latest = latestById.get(line.id as string);
-          return !latest || latest.text !== line.text || latest.romanization !== line.romanization;
+          const latest = latestById.get(line["id"] as string);
+          return !latest || latest["text"] !== line["text"] || latest["romanization"] !== line["romanization"];
         });
         if (changed || !latestRow) return json({ error: "The lyrics changed during romanization. Please retry." }, 409);
 
         const updatedLines = latestLines.map((line) => ({
           ...line,
-          romanization: romanizations[originalById.get(line.id as string)!.id as string],
+          romanization: romanizations[originalById.get(line["id"] as string)!["id"] as string],
         }));
         const db = await admin();
         const { error } = await db.from("songs" as never).update({ lyrics: { ...latestLyrics, lines: updatedLines } } as never).eq("id", id);

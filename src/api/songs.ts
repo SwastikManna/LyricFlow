@@ -135,14 +135,14 @@ export async function readLibraryAccessBackup(file: File): Promise<string> {
   if (typeof value !== "object" || value === null) throw new Error("Invalid library backup.");
   const backup = value as Record<string, unknown>;
   if (
-    backup.format !== LIBRARY_BACKUP_FORMAT ||
-    backup.version !== 1 ||
-    typeof backup.deviceId !== "string" ||
-    !/^[0-9a-f-]{36}$/i.test(backup.deviceId)
+    backup["format"] !== LIBRARY_BACKUP_FORMAT ||
+    backup["version"] !== 1 ||
+    typeof backup["deviceId"] !== "string" ||
+    !/^[0-9a-f-]{36}$/i.test(backup["deviceId"])
   ) {
     throw new Error("This file isn’t a valid LyricFlow library access backup.");
   }
-  return backup.deviceId;
+  return backup["deviceId"];
 }
 
 export function restoreLibraryAccess(deviceId: string) {
@@ -204,13 +204,14 @@ export async function processSong(
     if (stage.key === "transcribe") lyrics = await transcription;
     else if (stage.key === "romanize" && lyrics) {
       const romanizations = await romanizeSavedSong(id, getDeviceId(), signal).catch(() => null);
-      if (romanizations) {
+      if (romanizations && lyrics) {
+        const currentLyrics: SyncedLyrics = lyrics;
         lyrics = {
-          ...lyrics,
-          lines: lyrics.lines.map((line) => ({
-            ...line,
-            ...(romanizations[line.id] ? { romanization: romanizations[line.id] } : {}),
-          })),
+          ...currentLyrics,
+          lines: currentLyrics.lines.map((line) => {
+            const romanization = romanizations[line.id];
+            return romanization ? { ...line, romanization } : line;
+          }),
         };
       }
     }

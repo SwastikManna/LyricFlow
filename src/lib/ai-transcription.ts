@@ -81,5 +81,9 @@ export async function alignSavedSong(
     reason?: WordAlignmentResult["reason"];
   };
   if (!res.ok || !body.lyrics) throw new Error(body.error ?? "Word alignment failed.");
-  return { lyrics: body.lyrics, aligned: Boolean(body.aligned), reason: body.reason };
+  return {
+    lyrics: body.lyrics,
+    aligned: Boolean(body.aligned),
+    ...(body.reason ? { reason: body.reason } : {}),
+  };
 }

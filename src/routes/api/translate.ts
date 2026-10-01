@@ -49,15 +49,15 @@ export const Route = createFileRoute("/api/translate")({
         const savedLyrics = row.lyrics as { language?: string; lines?: unknown[] } | null;
         const lines = Array.isArray(savedLyrics?.lines)
           ? savedLyrics.lines.filter((line): line is Record<string, unknown> =>
-              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>).id === "string" && typeof (line as Record<string, unknown>).text === "string"),
+              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>)["id"] === "string" && typeof (line as Record<string, unknown>)["text"] === "string"),
             )
           : [];
         if (!lines.length || lines.length > 2000) return json({ error: "This song has no transcribable lyric lines." }, 422);
 
         const existing = Object.fromEntries(
           lines.map((line) => {
-            const translations = line.translations as Record<string, unknown> | undefined;
-            return [line.id as string, typeof translations?.[targetLanguage] === "string" ? translations[targetLanguage] as string : ""];
+            const translations = line["translations"] as Record<string, unknown> | undefined;
+            return [line["id"] as string, typeof translations?.[targetLanguage] === "string" ? translations[targetLanguage] as string : ""];
           }),
         );
         if (Object.values(existing).every(Boolean)) return json({ translations: existing, cached: true });
@@ -68,7 +68,7 @@ export const Route = createFileRoute("/api/translate")({
           title: String(row.title ?? "Unknown title").slice(0, 300),
           artist: String(row.artist ?? "Unknown artist").slice(0, 300),
           originalLanguage: String(savedLyrics?.language ?? "unknown").slice(0, 35),
-          lyrics: lines.map((line) => ({ id: line.id, text: line.text })),
+          lyrics: lines.map((line) => ({ id: line["id"], text: line["text"] })),
         });
 
         let upstream: Response;
@@ -129,7 +129,7 @@ export const Route = createFileRoute("/api/translate")({
         }
         const translations: Record<string, string> = {};
         for (const line of lines) {
-          const lineId = line.id as string;
+          const lineId = line["id"] as string;
           const value = byId.get(lineId);
           if (!value) return json({ error: "The AI didn't return a translation for every lyric line." }, 502);
           translations[lineId] = value;
@@ -140,27 +140,27 @@ export const Route = createFileRoute("/api/translate")({
         const latestLyrics = latestRow?.lyrics as { lines?: unknown[] } | null;
         const latestLines = Array.isArray(latestLyrics?.lines)
           ? latestLyrics.lines.filter((line): line is Record<string, unknown> =>
-              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>).id === "string"),
+              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>)["id"] === "string"),
             )
           : [];
-        const originalById = new Map(lines.map((line) => [line.id as string, line]));
-        const latestById = new Map(latestLines.map((line) => [line.id as string, line]));
+        const originalById = new Map(lines.map((line) => [line["id"] as string, line]));
+        const latestById = new Map(latestLines.map((line) => [line["id"] as string, line]));
         const lyricSetChanged = lines.length !== latestLines.length || lines.some((line) => {
-          const latest = latestById.get(line.id as string);
-          const oldTranslations = line.translations as Record<string, unknown> | undefined;
-          const currentTranslations = latest?.translations as Record<string, unknown> | undefined;
-          return !latest || latest.text !== line.text || currentTranslations?.[targetLanguage] !== oldTranslations?.[targetLanguage];
+          const latest = latestById.get(line["id"] as string);
+          const oldTranslations = line["translations"] as Record<string, unknown> | undefined;
+          const currentTranslations = latest?.["translations"] as Record<string, unknown> | undefined;
+          return !latest || latest["text"] !== line["text"] || currentTranslations?.[targetLanguage] !== oldTranslations?.[targetLanguage];
         });
         if (lyricSetChanged || !latestRow) {
           return json({ error: "The lyrics changed during translation. Please retry so the new version is translated." }, 409);
         }
         const updatedLines = latestLines.map((line) => {
-          const source = originalById.get(line.id as string)!;
+          const source = originalById.get(line["id"] as string)!;
           return {
             ...line,
             translations: {
-              ...((line.translations && typeof line.translations === "object") ? line.translations as Record<string, string> : {}),
-              [targetLanguage]: translations[source.id as string],
+              ...((line["translations"] && typeof line["translations"] === "object") ? line["translations"] as Record<string, string> : {}),
+              [targetLanguage]: translations[source["id"] as string],
             },
           };
         });
