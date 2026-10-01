@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { previewLyrics } from "@/lib/preview-lyrics";
 
-/** Decorative, self-driving lyric preview for the landing hero. */
+/** Short animated sample showing how lyrics are emphasized in the landing preview. */
 export function LyricsPreview() {
   const [index, setIndex] = useState(1);
 

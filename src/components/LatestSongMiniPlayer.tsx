@@ -70,15 +70,17 @@ export function LatestSongMiniPlayer({ song, loading = false, unavailable = fals
           <div className="flex min-w-0 items-center gap-3">
             <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-primary"><AudioLines className="size-3.5" /></span>
             <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">Live lyrics</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary sm:text-xs">
+                {song ? "Live lyrics" : "Lyric preview"}
+              </p>
               <p className="mt-1 truncate text-[11px] text-muted-foreground sm:text-xs">
-                {song ? `${song.title} · ${song.artist}` : unavailable ? "Your archive is unavailable" : loading ? "Loading your archive…" : "Your private listening room"}
+                {song ? `${song.title} · ${song.artist}` : unavailable ? "Your archive is unavailable" : loading ? "Loading your archive…" : "Sample lyrics · no audio"}
               </p>
             </div>
           </div>
           <span className="flex shrink-0 items-center gap-2 font-mono-ui text-[9px] uppercase tracking-[0.14em] text-foreground/40">
             <span className={`size-1.5 rounded-full ${player.isPlaying ? "animate-signal-pulse bg-primary" : "bg-foreground/30"}`} />
-            {player.isPlaying ? "Playing" : track ? "Ready" : song || loading ? "Loading" : unavailable ? "Unavailable" : "Preview"}
+            {player.isPlaying ? "Playing" : track ? "Ready" : song || loading ? "Loading" : unavailable ? "Unavailable" : "Sample"}
           </span>
         </div>
 
@@ -170,7 +172,7 @@ export function LatestSongMiniPlayer({ song, loading = false, unavailable = fals
       ) : (
         <Link to="/upload" className="absolute -bottom-5 -left-3 inline-flex items-center gap-3 rounded-full border border-glass-border bg-card/90 px-4 py-2.5 font-mono-ui text-[9px] uppercase tracking-[0.17em] text-foreground/55 shadow-lg backdrop-blur-xl transition-colors hover:text-foreground sm:-left-5">
           <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground"><Disc3 className="size-3" /></span>
-          Add a song to begin
+          Upload a song
         </Link>
       )}
     </div>
