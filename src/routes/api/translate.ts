@@ -68,17 +68,12 @@ export const Route = createFileRoute("/api/translate")({
 
         const savedLyrics = row.lyrics as { language?: string; lines?: unknown[] } | null;
         const lines = Array.isArray(savedLyrics?.lines)
-          ? savedLyrics.lines.filter((line): line is Record<string, unknown> =>
-              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>).id === "string" && typeof (line as Record<string, unknown>).text === "string"),
-            )
+          ? savedLyrics.lines.filter((line): line is RawLine => isRawLine(line) && typeof line.text === "string")
           : [];
         if (!lines.length || lines.length > 2000) return json({ error: "This song has no transcribable lyric lines." }, 422);
 
         const existing = Object.fromEntries(
-          lines.map((line) => {
-            const translations = line.translations as Record<string, unknown> | undefined;
-            return [line.id as string, typeof translations?.[targetLanguage] === "string" ? translations[targetLanguage] as string : ""];
-          }),
+          lines.map((line) => [line.id, asTranslations(line.translations)[targetLanguage] ?? ""]),
         );
         if (Object.values(existing).every(Boolean)) return json({ translations: existing, cached: true });
 
