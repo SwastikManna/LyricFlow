@@ -12,10 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as UploadRouteImport } from './routes/upload'
+import { Route as ApiRomanizeRouteImport } from './routes/api/romanize'
 import { Route as ApiSongsRouteImport } from './routes/api/songs'
 import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
 import { Route as ApiTranslateRouteImport } from './routes/api/translate'
-import { Route as ApiRomanizeRouteImport } from './routes/api/romanize'
 import { Route as EditSongIdRouteImport } from './routes/edit.$songId'
 import { Route as PlayerSongIdRouteImport } from './routes/player.$songId'
 import { Route as ProcessingSongIdRouteImport } from './routes/processing.$songId'
@@ -35,6 +35,11 @@ const UploadRoute = UploadRouteImport.update({
   path: '/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRomanizeRoute = ApiRomanizeRouteImport.update({
+  id: '/api/romanize',
+  path: '/api/romanize',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSongsRoute = ApiSongsRouteImport.update({
   id: '/api/songs',
   path: '/api/songs',
@@ -48,11 +53,6 @@ const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
 const ApiTranslateRoute = ApiTranslateRouteImport.update({
   id: '/api/translate',
   path: '/api/translate',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiRomanizeRoute = ApiRomanizeRouteImport.update({
-  id: '/api/romanize',
-  path: '/api/romanize',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EditSongIdRoute = EditSongIdRouteImport.update({
@@ -75,10 +75,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/library': typeof LibraryRoute
   '/upload': typeof UploadRoute
+  '/api/romanize': typeof ApiRomanizeRoute
   '/api/songs': typeof ApiSongsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
   '/api/translate': typeof ApiTranslateRoute
-  '/api/romanize': typeof ApiRomanizeRoute
   '/edit/$songId': typeof EditSongIdRoute
   '/player/$songId': typeof PlayerSongIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
@@ -87,10 +87,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/library': typeof LibraryRoute
   '/upload': typeof UploadRoute
+  '/api/romanize': typeof ApiRomanizeRoute
   '/api/songs': typeof ApiSongsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
   '/api/translate': typeof ApiTranslateRoute
-  '/api/romanize': typeof ApiRomanizeRoute
   '/edit/$songId': typeof EditSongIdRoute
   '/player/$songId': typeof PlayerSongIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
@@ -100,10 +100,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/library': typeof LibraryRoute
   '/upload': typeof UploadRoute
+  '/api/romanize': typeof ApiRomanizeRoute
   '/api/songs': typeof ApiSongsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
   '/api/translate': typeof ApiTranslateRoute
-  '/api/romanize': typeof ApiRomanizeRoute
   '/edit/$songId': typeof EditSongIdRoute
   '/player/$songId': typeof PlayerSongIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
@@ -114,10 +114,10 @@ export interface FileRouteTypes {
     | '/'
     | '/library'
     | '/upload'
+    | '/api/romanize'
     | '/api/songs'
     | '/api/transcribe'
     | '/api/translate'
-    | '/api/romanize'
     | '/edit/$songId'
     | '/player/$songId'
     | '/processing/$songId'
@@ -126,10 +126,10 @@ export interface FileRouteTypes {
     | '/'
     | '/library'
     | '/upload'
+    | '/api/romanize'
     | '/api/songs'
     | '/api/transcribe'
     | '/api/translate'
-    | '/api/romanize'
     | '/edit/$songId'
     | '/player/$songId'
     | '/processing/$songId'
@@ -138,10 +138,10 @@ export interface FileRouteTypes {
     | '/'
     | '/library'
     | '/upload'
+    | '/api/romanize'
     | '/api/songs'
     | '/api/transcribe'
     | '/api/translate'
-    | '/api/romanize'
     | '/edit/$songId'
     | '/player/$songId'
     | '/processing/$songId'
@@ -151,10 +151,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LibraryRoute: typeof LibraryRoute
   UploadRoute: typeof UploadRoute
+  ApiRomanizeRoute: typeof ApiRomanizeRoute
   ApiSongsRoute: typeof ApiSongsRoute
   ApiTranscribeRoute: typeof ApiTranscribeRoute
   ApiTranslateRoute: typeof ApiTranslateRoute
-  ApiRomanizeRoute: typeof ApiRomanizeRoute
   EditSongIdRoute: typeof EditSongIdRoute
   PlayerSongIdRoute: typeof PlayerSongIdRoute
   ProcessingSongIdRoute: typeof ProcessingSongIdRoute
@@ -183,6 +183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/romanize': {
+      id: '/api/romanize'
+      path: '/api/romanize'
+      fullPath: '/api/romanize'
+      preLoaderRoute: typeof ApiRomanizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/songs': {
       id: '/api/songs'
       path: '/api/songs'
@@ -202,13 +209,6 @@ declare module '@tanstack/react-router' {
       path: '/api/translate'
       fullPath: '/api/translate'
       preLoaderRoute: typeof ApiTranslateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/romanize': {
-      id: '/api/romanize'
-      path: '/api/romanize'
-      fullPath: '/api/romanize'
-      preLoaderRoute: typeof ApiRomanizeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/edit/$songId': {
@@ -239,10 +239,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LibraryRoute: LibraryRoute,
   UploadRoute: UploadRoute,
+  ApiRomanizeRoute: ApiRomanizeRoute,
   ApiSongsRoute: ApiSongsRoute,
   ApiTranscribeRoute: ApiTranscribeRoute,
   ApiTranslateRoute: ApiTranslateRoute,
-  ApiRomanizeRoute: ApiRomanizeRoute,
   EditSongIdRoute: EditSongIdRoute,
   PlayerSongIdRoute: PlayerSongIdRoute,
   ProcessingSongIdRoute: ProcessingSongIdRoute,
