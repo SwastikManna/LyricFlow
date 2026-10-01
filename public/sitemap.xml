@@ -4,8 +4,4 @@
     <loc>https://lyricflow-swastik.lovable.app/</loc>
     <priority>1.0</priority>
   </url>
-  <url>
-    <loc>https://lyricflow-swastik.lovable.app/library</loc>
-    <priority>0.6</priority>
-  </url>
 </urlset>
