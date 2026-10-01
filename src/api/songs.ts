@@ -148,14 +148,15 @@ export async function processSong(
     onStage?.(i, { songId: id, processingStatus: stage.status, progress: stage.progress, stage: stage.label });
     if (stage.key === "transcribe") lyrics = await transcription;
     else if (stage.key === "romanize" && lyrics) {
+      const current: SyncedLyrics = lyrics;
       const romanizations = await romanizeSavedSong(id, getDeviceId(), signal).catch(() => null);
       if (romanizations) {
         lyrics = {
-          ...lyrics,
-          lines: lyrics.lines.map((line) => ({
-            ...line,
-            ...(romanizations[line.id] ? { romanization: romanizations[line.id] } : {}),
-          })),
+          ...current,
+          lines: current.lines.map((line) => {
+            const romanization = romanizations[line.id];
+            return romanization ? { ...line, romanization } : line;
+          }),
         };
       }
     }
