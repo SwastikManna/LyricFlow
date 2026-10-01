@@ -195,6 +195,11 @@
   50% { opacity: 1; box-shadow: 0 0 0 5px oklch(0.82 0.145 78 / 0.09); }
 }
 
+@keyframes progress-sweep {
+  from { transform: translateX(0); }
+  to { transform: translateX(400%); }
+}
+
 @utility animate-float-slow {
   animation: float-slow 7s ease-in-out infinite;
 }
@@ -217,6 +222,10 @@
 
 @utility animate-signal-pulse {
   animation: signal-pulse 2.2s ease-in-out infinite;
+}
+
+@utility animate-progress-sweep {
+  animation: progress-sweep 1.8s ease-in-out infinite alternate;
 }
 
 .grain::after {

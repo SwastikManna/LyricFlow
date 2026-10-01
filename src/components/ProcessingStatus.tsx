@@ -5,29 +5,44 @@ import { PROCESSING_STAGES } from "@/api/songs";
 interface ProcessingStatusProps {
   /** Index of the stage currently running. */
   currentStage: number;
-  progress: number;
 }
 
-export function ProcessingStatus({ currentStage, progress }: ProcessingStatusProps) {
+export function ProcessingStatus({ currentStage }: ProcessingStatusProps) {
+  const completedStages = Math.min(currentStage, PROCESSING_STAGES.length);
+  const completedWidth = (completedStages / PROCESSING_STAGES.length) * 100;
+  const activeStage = PROCESSING_STAGES[currentStage];
+
   return (
     <div className="w-full max-w-md">
       <div className="mb-8 sm:mb-10">
         <div
           role="progressbar"
-          aria-label="Track analysis progress"
+          aria-label="Track analysis steps completed"
           aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={progress}
-          className="h-1 w-full overflow-hidden rounded-full bg-foreground/15"
+          aria-valuemax={PROCESSING_STAGES.length}
+          aria-valuenow={completedStages}
+          className="relative h-1 w-full overflow-hidden rounded-full bg-foreground/15"
         >
           <div
-            className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
-            style={{ width: `${progress}%` }}
+            className="h-full rounded-full bg-primary/70 transition-[width] duration-500 ease-out"
+            style={{ width: `${completedWidth}%` }}
           />
+          {activeStage && (
+            <div
+              aria-hidden="true"
+              className="absolute inset-y-0 w-1/4 rounded-full bg-primary motion-safe:animate-progress-sweep"
+              style={{ left: `${completedWidth}%` }}
+            />
+          )}
         </div>
         <p className="mt-3 text-center text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:text-xs sm:tracking-[0.3em]">
-          {progress}% complete
+          {completedStages} of {PROCESSING_STAGES.length} steps complete
         </p>
+        {activeStage && (
+          <p className="mt-1 text-center text-xs text-muted-foreground" aria-live="polite">
+            {activeStage.label}…
+          </p>
+        )}
       </div>
 
       <ul className="space-y-3 sm:space-y-4">

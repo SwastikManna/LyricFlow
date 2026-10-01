@@ -31,7 +31,6 @@ function ProcessingPage() {
   const navigate = useNavigate();
   const [song, setSong] = useState<Song | null>(null);
   const [stageIndex, setStageIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -65,16 +64,14 @@ function ProcessingPage() {
       try {
         await processSong(
           songId,
-          (index, status) => {
+          (index) => {
             if (cancelled) return;
             setStageIndex(index);
-            setProgress(status.progress);
           },
           controller.signal,
         );
         if (!cancelled) {
           setStageIndex(PROCESSING_STAGES.length);
-          setProgress(100);
           setTimeout(
             () => navigate({ to: "/player/$songId", params: { songId } }),
             500,
@@ -109,7 +106,6 @@ function ProcessingPage() {
               type="button"
               onClick={() => {
                 setError(null);
-                setProgress(0);
                 setStageIndex(0);
                 setAttempt((current) => current + 1);
               }}
@@ -150,7 +146,7 @@ function ProcessingPage() {
       </div>
 
       <div className="mt-14 flex justify-center">
-        <ProcessingStatus currentStage={stageIndex} progress={progress} />
+        <ProcessingStatus currentStage={stageIndex} />
       </div>
     </main>
   );
