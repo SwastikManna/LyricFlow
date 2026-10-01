@@ -17,18 +17,21 @@ export const Route = createFileRoute("/")({
           "Upload a song and follow its lyrics as it plays. Switch between the original script, Latin-letter pronunciation, and optional translations.",
       },
       { property: "og:title", content: "LyricFlow — Living lyrics for your music" },
+      { property: "og:url", content: "https://lyricflow-swastik.lovable.app/" },
+      { property: "og:type", content: "website" },
       {
         property: "og:description",
         content:
           "Follow a song’s lyrics in its original script, as a phonetic romanization, or with an optional translation.",
       },
-      { name: "twitter:card", content: "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "LyricFlow — Living lyrics for your music" },
       {
         name: "twitter:description",
         content: "Follow song lyrics in the original script or as phonetic romanization, with optional translation.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://lyricflow-swastik.lovable.app/" }],
   }),
   component: Home,
   errorComponent: RouteError,
@@ -54,6 +57,29 @@ function Home() {
 
   return (
     <main className="grain bg-stage min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "LyricFlow",
+            url: "https://lyricflow-swastik.lovable.app/",
+            description: "Follow song lyrics in the original script or as phonetic romanization, with optional translation and playback timing.",
+            applicationCategory: "MultimediaApplication",
+            operatingSystem: "All",
+            browserRequirements: "Requires a modern web browser with JavaScript enabled.",
+            featureList: [
+              "AI-generated song transcription",
+              "Romanized lyrics in Latin letters",
+              "Optional lyric translation",
+              "Lyrics timed to audio playback",
+              "Editable lyric text and timing",
+            ],
+            publisher: { "@type": "Organization", name: "LyricFlow" },
+          }),
+        }}
+      />
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-4 sm:px-8 sm:py-5">
         <Link to="/" className="inline-flex shrink-0 items-center gap-2 font-display text-sm font-semibold tracking-tight">
           <span className="inline-flex size-7 items-center justify-center rounded-full border border-primary/40 text-primary">
