@@ -15,11 +15,12 @@ export const Route = createFileRoute("/upload")({
           "Upload an MP3, MP4, WAV or M4A file up to 20 MB and follow its lyrics in the player.",
       },
       { property: "og:title", content: "Upload a track — LyricFlow" },
-      { property: "og:url", content: "https://lyricflow-swastik.lovable.app/upload" },
       {
         property: "og:description",
         content: "Upload a song to generate lyrics timed to playback, with phonetic writing and optional translation.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://lyricflow-swastik.lovable.app/upload" },
       { name: "robots", content: "noindex,follow" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Upload a track — LyricFlow" },
