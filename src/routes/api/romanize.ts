@@ -97,30 +97,27 @@ export const Route = createFileRoute("/api/romanize")({
         }
         const romanizations: Record<string, string> = {};
         for (const line of lines) {
-          const value = byId.get(line.id as string);
+          const value = byId.get(line.id);
           if (!value) return json({ error: "The AI didn't return a romanized version for every line." }, 502);
-          romanizations[line.id as string] = value;
+          romanizations[line.id] = value;
         }
 
         // Re-read before saving to preserve edits made while the model was running.
         const latestRow = await getOwnedRow(id, deviceId);
         const latestLyrics = latestRow?.lyrics as { lines?: unknown[] } | null;
         const latestLines = Array.isArray(latestLyrics?.lines)
-          ? latestLyrics.lines.filter((line): line is Record<string, unknown> =>
-              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>).id === "string"),
-            )
+          ? latestLyrics.lines.filter(isRawLine)
           : [];
-        const originalById = new Map(lines.map((line) => [line.id as string, line]));
-        const latestById = new Map(latestLines.map((line) => [line.id as string, line]));
+        const latestById = new Map(latestLines.map((line) => [line.id, line]));
         const changed = lines.length !== latestLines.length || lines.some((line) => {
-          const latest = latestById.get(line.id as string);
+          const latest = latestById.get(line.id);
           return !latest || latest.text !== line.text || latest.romanization !== line.romanization;
         });
         if (changed || !latestRow) return json({ error: "The lyrics changed during romanization. Please retry." }, 409);
 
         const updatedLines = latestLines.map((line) => ({
           ...line,
-          romanization: romanizations[originalById.get(line.id as string)!.id as string],
+          romanization: romanizations[line.id]!,
         }));
         const db = await admin();
         const { error } = await db.from("songs" as never).update({ lyrics: { ...latestLyrics, lines: updatedLines } } as never).eq("id", id);
