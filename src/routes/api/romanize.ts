@@ -41,13 +41,11 @@ export const Route = createFileRoute("/api/romanize")({
         if (!row) return json({ error: "Song not found." }, 404);
         const savedLyrics = row.lyrics as { language?: string; lines?: unknown[] } | null;
         const lines = Array.isArray(savedLyrics?.lines)
-          ? savedLyrics.lines.filter((line): line is Record<string, unknown> =>
-              Boolean(line && typeof line === "object" && typeof (line as Record<string, unknown>).id === "string" && typeof (line as Record<string, unknown>).text === "string"),
-            )
+          ? savedLyrics.lines.filter((line): line is RawLine => isRawLine(line) && typeof line.text === "string")
           : [];
         if (!lines.length || lines.length > 2000) return json({ error: "This song has no lyric lines to romanize." }, 422);
 
-        const cached = Object.fromEntries(lines.map((line) => [line.id as string, typeof line.romanization === "string" ? line.romanization.trim() : ""]));
+        const cached = Object.fromEntries(lines.map((line) => [line.id, typeof line.romanization === "string" ? line.romanization.trim() : ""]));
         if (Object.values(cached).every(Boolean)) return json({ romanizations: cached, cached: true });
 
         const instruction = `Write a phonetic transliteration of the lyrics in the Latin alphabet, using easy-to-read spellings familiar to English readers. Keep the original language, words, meaning, and line order exactly the same; do NOT translate the lyrics into English. For example, Hindi "देखो देखो" should become "dekho dekho", not "look, look". Keep exactly one result for every input line and preserve each id exactly. Return only JSON: {"romanizations":[{"id":"original-id","text":"phonetic words in Latin letters"}]}.`;
