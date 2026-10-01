@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { ArrowRight, FileAudio, Loader2, UploadCloud, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatFileSize, isAcceptedAudioFile } from "@/api/songs";
+import { MAX_SONG_FILE_BYTES, MAX_SONG_FILE_LABEL } from "@/lib/song-constraints";
 
 interface UploadBoxProps {
   onSubmit: (file: File) => void;
@@ -19,6 +20,11 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
 
   const accept = (candidate: File | undefined | null) => {
     if (!candidate) return;
+    if (candidate.size > MAX_SONG_FILE_BYTES) {
+      setError(`That file is too large. Choose a track under ${MAX_SONG_FILE_LABEL}.`);
+      setFile(null);
+      return;
+    }
     if (!isAcceptedAudioFile(candidate)) {
       setError("That format isn't supported. Use MP3, MP4, WAV or M4A.");
       setFile(null);
@@ -65,7 +71,10 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
           type="file"
           accept=".mp3,.mp4,.wav,.m4a,audio/*,video/mp4"
           className="hidden"
-          onChange={(e) => accept(e.target.files?.[0])}
+          onChange={(e) => {
+            accept(e.target.files?.[0]);
+            e.currentTarget.value = "";
+          }}
         />
 
         {!file ? (
@@ -80,8 +89,8 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
             <p className={cn("text-muted-foreground", compact ? "mt-1 text-xs" : "mt-2 text-sm")}>
               or click to browse your files
             </p>
-            <p className={cn("text-xs uppercase tracking-[0.3em] text-muted-foreground/70", compact ? "mt-4" : "mt-6")}>
-              MP3 • MP4 • WAV • M4A
+            <p className={cn("mt-4 text-xs text-muted-foreground", compact ? "" : "sm:mt-6")}>
+              MP3, MP4, WAV or M4A · up to {MAX_SONG_FILE_LABEL}
             </p>
             <span className={cn("rounded-full border border-glass-border px-6 text-sm font-medium text-foreground transition-colors group-hover:bg-glass", compact ? "mt-4 py-2" : "mt-6 py-2.5")}>
               Browse files
@@ -138,7 +147,7 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
                 </>
               ) : (
                 <>
-                  Continue <ArrowRight className="size-4" />
+                  Upload and prepare lyrics <ArrowRight className="size-4" />
                 </>
               )}
             </button>

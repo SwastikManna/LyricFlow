@@ -35,13 +35,23 @@ function ProcessingPage() {
   const [progress, setProgress] = useState(0);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
     let cancelled = false;
 
     (async () => {
-      const found = await getSong(songId).catch(() => null);
+      let found: Song | null;
+      try {
+        found = await getSong(songId);
+      } catch (loadError) {
+        if (!cancelled) {
+          console.error("[processing] Could not load saved track:", loadError);
+          setError("We couldn’t load this saved track. Check your connection and try again.");
+        }
+        return;
+      }
       if (cancelled) return;
       if (!found) {
         setMissing(true);
@@ -74,7 +84,7 @@ function ProcessingPage() {
       } catch (err) {
         if (cancelled || (err instanceof DOMException && err.name === "AbortError")) return;
         console.error("[processing] Could not finish analyzing track:", err);
-        setError("The analysis stopped before it could finish. Upload the track again or choose another file.");
+        setError("The analysis stopped before it could finish. Your uploaded track is still in your library.");
       }
     })();
 
@@ -82,7 +92,7 @@ function ProcessingPage() {
       cancelled = true;
       controller.abort();
     };
-  }, [songId, navigate]);
+  }, [songId, navigate, attempt]);
 
   if (missing || error) {
     return (
@@ -94,12 +104,29 @@ function ProcessingPage() {
           {error ??
             "It may have been deleted, or it was uploaded from another browser."}
         </p>
-        <Link
-          to="/upload"
-          className="mt-2 rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground shadow-glow"
-        >
-          Upload a song
-        </Link>
+        {error ? (
+          <div className="mt-2 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setProgress(0);
+                setStageIndex(0);
+                setAttempt((current) => current + 1);
+              }}
+              className="rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground shadow-glow"
+            >
+              Retry analysis
+            </button>
+            <Link to="/library" className="rounded-full border border-glass-border px-6 py-3 font-medium hover:bg-glass">
+              Back to library
+            </Link>
+          </div>
+        ) : (
+          <Link to="/upload" className="mt-2 rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground shadow-glow">
+            Upload a song
+          </Link>
+        )}
       </main>
     );
   }
@@ -118,6 +145,9 @@ function ProcessingPage() {
           {song?.title ?? "Your track"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{song?.artist}</p>
+        <p className="mt-3 max-w-sm text-xs leading-5 text-muted-foreground">
+          Keep this page open while LyricFlow prepares your lyrics. If analysis fails, you can retry without uploading the track again.
+        </p>
       </div>
 
       <div className="mt-14 flex justify-center">

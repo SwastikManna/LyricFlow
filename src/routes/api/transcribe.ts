@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { normalizeLyrics } from "@/lib/ai-transcription";
 import { forceAlignLyricsToAudio } from "@/lib/forced-alignment";
 import type { SyncedLyrics } from "@/types/lyrics";
+import { MAX_SONG_FILE_BYTES, MAX_SONG_FILE_LABEL } from "@/lib/song-constraints";
 
-const MAX_BYTES = 20 * 1024 * 1024;
 const MODEL = "google/gemini-3.8-flash";
 
 const FORMATS: Record<string, string> = {
@@ -62,7 +62,7 @@ async function alignSavedLyrics(id: string, deviceId: string, request: Request) 
     return json({ lyrics: lineOnly, aligned: false, reason: "not_configured" });
   }
 
-  if (row.file_size > MAX_BYTES) {
+  if (row.file_size > MAX_SONG_FILE_BYTES) {
     await save(lineOnly);
     return json({ lyrics: lineOnly, aligned: false, reason: "unavailable" });
   }
@@ -113,7 +113,7 @@ export const Route = createFileRoute("/api/transcribe")({
         const setStatus = (processing_status: string, error_message: string | null = null) =>
           db.from("songs" as never).update({ processing_status, error_message } as never).eq("id", id);
 
-        if (row.file_size > MAX_BYTES) return json({ error: "This file is too large to analyze (max 20 MB)." }, 413);
+        if (row.file_size > MAX_SONG_FILE_BYTES) return json({ error: `This file is too large to analyze (max ${MAX_SONG_FILE_LABEL}).` }, 413);
         const ext = row.file_name.toLowerCase().split(".").pop() ?? "";
         const format = FORMATS[ext];
         if (!format) return json({ error: "Unsupported audio format." }, 400);

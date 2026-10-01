@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { ArrowLeft, AudioLines } from "lucide-react";
+import { ArrowLeft, AudioLines, ShieldCheck } from "lucide-react";
 import { UploadBox } from "@/components/UploadBox";
 import { createSong } from "@/api/songs";
 import { RouteError } from "@/components/RouteError";
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/upload")({
       {
         name: "description",
         content:
-          "Upload an MP3, MP4, WAV or M4A file and LyricFlow will transcribe and synchronize its lyrics for live playback.",
+          "Upload an MP3, MP4, WAV or M4A file up to 20 MB and follow its lyrics in the player.",
       },
       { property: "og:title", content: "Upload a track — LyricFlow" },
       {
@@ -72,12 +72,22 @@ function UploadPage() {
           <h1 className="mt-3 max-w-xs font-display text-[2.75rem] leading-[0.9] tracking-[-0.055em] sm:mt-4 sm:text-6xl">
             Start<br />with<br /><span className="font-display italic tracking-[-0.06em] text-primary">sound.</span>
           </h1>
-          <p className="mt-4 max-w-xs text-xs leading-5 text-muted-foreground sm:mt-5 sm:text-sm sm:leading-6">We’ll map the feeling in your track, then give every word a moment to arrive.</p>
+          <p className="mt-4 max-w-xs text-sm leading-6 text-muted-foreground sm:mt-5">Choose a song to generate lyrics timed to playback, phonetic writing, and optional translation.</p>
         </div>
 
         <div className="w-full max-w-xl justify-self-center">
           <UploadBox compact onSubmit={handleSubmit} isUploading={isUploading} progress={progress} />
           {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+          <aside className="mt-5 rounded-2xl border border-glass-border bg-background/45 p-4 sm:mt-6" aria-labelledby="upload-details-title">
+            <h2 id="upload-details-title" className="flex items-center gap-2 text-sm font-semibold">
+              <ShieldCheck className="size-4 text-primary" aria-hidden /> Before you upload
+            </h2>
+            <ul className="mt-3 space-y-2 text-xs leading-5 text-muted-foreground sm:text-sm">
+              <li>Your audio and generated lyrics are stored with your LyricFlow library until you delete the song.</li>
+              <li>Your library is linked to this browser. Clearing its site data or switching browsers may remove your access.</li>
+              <li>LyricFlow sends your audio to Lovable AI for transcription and lyric text for phonetic writing or translation. When enabled, audio and its transcript are also sent to ElevenLabs for word-level timing; otherwise timing follows whole lines.</li>
+            </ul>
+          </aside>
         </div>
       </section>
     </main>

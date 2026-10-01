@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { MAX_SONG_FILE_BYTES, MAX_SONG_FILE_LABEL } from "@/lib/song-constraints";
 
-const MAX_BYTES = 20 * 1024 * 1024;
 const TYPES: Record<string, string> = {
   mp3: "audio/mpeg",
   wav: "audio/wav",
@@ -26,8 +26,8 @@ export const Route = createFileRoute("/api/songs")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (Number(request.headers.get("content-length") ?? 0) > MAX_BYTES + 1024 * 1024) {
-          return json({ error: "This file is too large (max 20 MB)." }, 413);
+        if (Number(request.headers.get("content-length") ?? 0) > MAX_SONG_FILE_BYTES + 1024 * 1024) {
+          return json({ error: `This file is too large (max ${MAX_SONG_FILE_LABEL}).` }, 413);
         }
         const form = await request.formData();
         const file = form.get("file");
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/songs")({
         const duration = Number(form.get("duration") ?? 0);
         if (deviceId.length < 8 || deviceId.length > 100) return json({ error: "Invalid request." }, 400);
         if (!(file instanceof File) || file.size === 0) return json({ error: "No audio file received." }, 400);
-        if (file.size > MAX_BYTES) return json({ error: "This file is too large (max 20 MB)." }, 413);
+        if (file.size > MAX_SONG_FILE_BYTES) return json({ error: `This file is too large (max ${MAX_SONG_FILE_LABEL}).` }, 413);
         const ext = file.name.toLowerCase().split(".").pop() ?? "";
         const type = TYPES[ext];
         if (!type) return json({ error: "Unsupported audio format." }, 400);
