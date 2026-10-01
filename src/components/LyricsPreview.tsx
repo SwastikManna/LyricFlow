@@ -7,6 +7,7 @@ export function LyricsPreview() {
   const [index, setIndex] = useState(1);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = setInterval(() => setIndex((i) => (i + 1) % previewLyrics.lines.length), 2600);
     return () => clearInterval(id);
   }, []);

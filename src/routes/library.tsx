@@ -25,9 +25,9 @@ export const Route = createFileRoute("/library")({
   head: () => ({
     meta: [
       { title: "Your library — LyricFlow" },
-      { name: "description", content: "Every song you've uploaded to LyricFlow, ready to play with live synchronized lyrics." },
+      { name: "description", content: "Every song you've uploaded to LyricFlow, ready to play with lyrics timed to playback." },
       { property: "og:title", content: "Your library — LyricFlow" },
-      { property: "og:description", content: "Your saved songs with live, word-by-word lyrics." },
+      { property: "og:description", content: "Your saved songs with lyrics timed to playback." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex,follow" },
@@ -35,7 +35,6 @@ export const Route = createFileRoute("/library")({
   }),
   component: LibraryPage,
   errorComponent: RouteError,
-  notFoundComponent: () => <div className="p-10 text-center">Page not found.</div>,
 });
 
 function statusLabel(song: LibrarySong) {

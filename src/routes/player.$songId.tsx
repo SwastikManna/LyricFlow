@@ -13,19 +13,18 @@ export const Route = createFileRoute("/player/$songId")({
       {
         name: "description",
         content:
-          "Play your song with large, word-by-word synchronized lyrics that scroll in time with the music.",
+          "Follow timed lyrics as your song plays. Word-level highlighting is available when audio alignment is enabled.",
       },
       { property: "og:title", content: "Live lyrics player — LyricFlow" },
       {
         property: "og:description",
-        content: "Word-by-word synchronized lyrics that follow your song in real time.",
+        content: "Lyrics timed to your song, with optional word-level highlighting.",
       },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: PlayerPage,
   errorComponent: RouteError,
-  notFoundComponent: () => <div className="p-10 text-center">Song not found.</div>,
 });
 
 function PlayerPage() {

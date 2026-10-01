@@ -155,7 +155,7 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-glass-border/60 pt-3">
         <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground" title="Only audio-aligned timings are used for word-by-word highlighting.">
-          {playerLyrics.wordTimingSource === "audio-aligned" ? "Word timing · audio aligned" : "Line timing · word sync unavailable"}
+          {playerLyrics.wordTimingSource === "audio-aligned" ? "Word-by-word timing · audio aligned" : "Line timing · word-by-word sync not set"}
         </span>
         {needsWordAlignment && (
           <button

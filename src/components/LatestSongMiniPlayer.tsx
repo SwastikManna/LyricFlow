@@ -63,22 +63,22 @@ export function LatestSongMiniPlayer({ song, loading = false, unavailable = fals
   const playerPath = song?.processingStatus === "READY" ? "/player/$songId" : "/processing/$songId";
 
   return (
-    <div className="animate-lyric-float relative w-full max-w-[480px]">
+    <div className="relative w-full max-w-[480px] sm:animate-lyric-float">
       <div className="glass-panel relative overflow-hidden rounded-[1.5rem] p-4 shadow-lift sm:rounded-[2rem] sm:p-9">
         <div className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full bg-accent/10 blur-3xl" />
         <div className="relative flex items-center justify-between gap-3 border-b border-glass-border/80 pb-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-primary"><AudioLines className="size-3.5" /></span>
             <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary sm:text-xs">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
                 {song ? "Live lyrics" : "Lyric preview"}
               </p>
-              <p className="mt-1 truncate text-[11px] text-muted-foreground sm:text-xs">
+              <p className="mt-1 truncate text-xs text-muted-foreground">
                 {song ? `${song.title} · ${song.artist}` : unavailable ? "Your archive is unavailable" : loading ? "Loading your archive…" : "Sample lyrics · no audio"}
               </p>
             </div>
           </div>
-          <span className="flex shrink-0 items-center gap-2 font-mono-ui text-[9px] uppercase tracking-[0.14em] text-foreground/40">
+          <span className="flex shrink-0 items-center gap-2 font-mono-ui text-xs uppercase tracking-[0.1em] text-muted-foreground">
             <span className={`size-1.5 rounded-full ${player.isPlaying ? "animate-signal-pulse bg-primary" : "bg-foreground/30"}`} />
             {player.isPlaying ? "Playing" : track ? "Ready" : song || loading ? "Loading" : unavailable ? "Unavailable" : "Sample"}
           </span>
@@ -87,7 +87,7 @@ export function LatestSongMiniPlayer({ song, loading = false, unavailable = fals
         {song ? (
           <>
             <div className="relative mt-3 flex items-center justify-between gap-3">
-              <span className="font-mono-ui text-[9px] uppercase tracking-[0.12em] text-muted-foreground/70 sm:text-[10px] sm:tracking-[0.16em]">
+              <span className="font-mono-ui text-xs uppercase tracking-[0.1em] text-muted-foreground">
                 {lyrics ? `${lyrics.language} · ${lines.length} lines` : song.processingStatus === "READY" ? "Lyrics unavailable" : "Lyrics are being prepared"}
               </span>
               <div className="flex rounded-full border border-glass-border bg-background/45 p-0.5" role="group" aria-label="Lyric script">
@@ -95,7 +95,7 @@ export function LatestSongMiniPlayer({ song, loading = false, unavailable = fals
                   type="button"
                   aria-pressed={script === "original"}
                   onClick={() => setScript("original")}
-                  className={`rounded-full px-2 py-1.5 font-mono-ui text-[9px] uppercase tracking-[0.08em] transition-colors sm:px-2.5 sm:text-[10px] sm:tracking-[0.12em] ${script === "original" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`rounded-full px-2 py-1.5 font-mono-ui text-xs uppercase tracking-[0.06em] transition-colors sm:px-2.5 ${script === "original" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                 >Original</button>
                 <button
                   type="button"
@@ -103,7 +103,7 @@ export function LatestSongMiniPlayer({ song, loading = false, unavailable = fals
                   onClick={() => setScript("romanized")}
                   disabled={!hasRomanization}
                   title={hasRomanization ? "Show romanized lyrics" : "Romanized lyrics are not available yet"}
-                  className={`rounded-full px-2 py-1.5 font-mono-ui text-[9px] uppercase tracking-[0.08em] transition-colors disabled:cursor-not-allowed disabled:opacity-35 sm:px-2.5 sm:text-[10px] sm:tracking-[0.12em] ${script === "romanized" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`rounded-full px-2 py-1.5 font-mono-ui text-xs uppercase tracking-[0.06em] transition-colors disabled:cursor-not-allowed disabled:opacity-35 sm:px-2.5 ${script === "romanized" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                 >Romanized</button>
               </div>
             </div>
@@ -157,7 +157,7 @@ export function LatestSongMiniPlayer({ song, loading = false, unavailable = fals
           >
             {player.isPlaying ? <Pause className="size-3.5 fill-current" /> : <Play className="ml-0.5 size-3.5 fill-current" />}
           </button>
-          <span className="font-mono-ui text-[8px] uppercase tracking-[0.14em] text-foreground/55">
+          <span className="font-mono-ui text-xs uppercase tracking-[0.08em] text-muted-foreground">
             {player.isPlaying ? "Now playing" : "Play your latest song"}
           </span>
           <Link to={playerPath} params={{ songId: song.id }} aria-label="Open full player" className="inline-flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-primary">
@@ -165,12 +165,12 @@ export function LatestSongMiniPlayer({ song, loading = false, unavailable = fals
           </Link>
         </div>
       ) : loading || unavailable ? (
-        <div className="absolute -bottom-5 -left-3 inline-flex items-center gap-3 rounded-full border border-glass-border bg-card/90 px-4 py-2.5 font-mono-ui text-[9px] uppercase tracking-[0.17em] text-foreground/55 shadow-lg backdrop-blur-xl sm:-left-5" role="status">
+        <div className="absolute -bottom-5 -left-3 inline-flex items-center gap-3 rounded-full border border-glass-border bg-card/90 px-4 py-2.5 font-mono-ui text-xs uppercase tracking-[0.08em] text-muted-foreground shadow-lg backdrop-blur-xl sm:-left-5" role="status">
           <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary/15 text-primary"><Disc3 className="size-3" /></span>
           {loading ? "Loading your archive" : "Archive unavailable"}
         </div>
       ) : (
-        <Link to="/upload" className="absolute -bottom-5 -left-3 inline-flex items-center gap-3 rounded-full border border-glass-border bg-card/90 px-4 py-2.5 font-mono-ui text-[9px] uppercase tracking-[0.17em] text-foreground/55 shadow-lg backdrop-blur-xl transition-colors hover:text-foreground sm:-left-5">
+        <Link to="/upload" className="absolute -bottom-5 -left-3 inline-flex items-center gap-3 rounded-full border border-glass-border bg-card/90 px-4 py-2.5 font-mono-ui text-xs uppercase tracking-[0.08em] text-muted-foreground shadow-lg backdrop-blur-xl transition-colors hover:text-foreground sm:-left-5">
           <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground"><Disc3 className="size-3" /></span>
           Upload a song
         </Link>

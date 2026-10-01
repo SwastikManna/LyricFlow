@@ -25,7 +25,6 @@ export const Route = createFileRoute("/edit/$songId")({
   }),
   component: EditPage,
   errorComponent: RouteError,
-  notFoundComponent: () => <div className="p-10 text-center">Page not found.</div>,
 });
 
 interface Row { id: string; text: string; start: string; end: string; translations: Record<string, string>; romanization: string }

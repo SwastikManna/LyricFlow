@@ -12,19 +12,18 @@ export const Route = createFileRoute("/processing/$songId")({
       {
         name: "description",
         content:
-          "LyricFlow transcribes your song, writes phonetic lyrics, detects its beat and aligns every line.",
+          "LyricFlow transcribes your song and prepares phonetic lyrics with timestamps. Review and adjust timing in the editor.",
       },
       { property: "og:title", content: "Analyzing your track — LyricFlow" },
       {
         property: "og:description",
-        content: "Transcribing vocals, preparing phonetic lyrics and aligning lyric timestamps.",
+        content: "Transcribing vocals and preparing phonetic lyrics with editable lyric timestamps.",
       },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: ProcessingPage,
   errorComponent: RouteError,
-  notFoundComponent: () => <div className="p-10 text-center">Song not found.</div>,
 });
 
 function ProcessingPage() {
