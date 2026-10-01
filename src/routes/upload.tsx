@@ -84,7 +84,7 @@ function UploadPage() {
             </h2>
             <ul className="mt-3 space-y-2 text-xs leading-5 text-muted-foreground sm:text-sm">
               <li>Your audio and generated lyrics are stored with your LyricFlow library until you delete the song.</li>
-              <li>Your library is linked to this browser. Clearing its site data or switching browsers may remove your access.</li>
+              <li>Your library is linked to this browser. Clearing its site data or switching browsers may remove access; download an access backup from your Library to reconnect.</li>
               <li>LyricFlow sends your audio to Lovable AI for transcription and lyric text for phonetic writing or translation. When enabled, audio and its transcript are also sent to ElevenLabs for word-level timing; otherwise timing follows whole lines.</li>
             </ul>
           </aside>

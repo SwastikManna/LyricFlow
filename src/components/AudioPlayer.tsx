@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, AudioLines, House, Languages, LoaderCircle } from "lucide-react";
+import { ArrowLeft, AudioLines, ChevronDown, House, Languages, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AlbumArtwork } from "./AlbumArtwork";
 import { LyricsDisplay } from "./LyricsDisplay";
@@ -191,49 +191,53 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
         </button>
       </div>
 
-      <div className={`mt-3 grid gap-2.5 ${isFullscreen ? "grid-cols-1 lg:grid-cols-2" : "sm:grid-cols-2"}`}>
-        <div className="rounded-2xl border border-glass-border/70 bg-background/35 p-2.5">
-          <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Translation language</span>
-          <Select value={translationLanguage} onValueChange={setTranslationLanguage}>
-            <SelectTrigger aria-label="Translation language" className="h-9 rounded-xl border-glass-border bg-glass text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TRANSLATION_LANGUAGES.map((language) => <SelectItem key={language.code} value={language.code}>{language.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+      {needsRomanization && (
+        <div className="mt-3">
+          <button type="button" onClick={romanizeLyrics} disabled={romanizationLoading} className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/[0.08] px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/[0.15] disabled:opacity-60">
+            {romanizationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
+            {romanizationLoading ? "Writing pronunciations…" : "Create romanized lyrics"}
+          </button>
         </div>
-        <div className="rounded-2xl border border-glass-border/70 bg-background/35 p-2.5">
-          <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Translation subtitles</span>
-          <Select value={translationDisplay} onValueChange={(value) => setTranslationDisplay(value as TranslationDisplayMode)}>
-            <SelectTrigger aria-label="Translation subtitle display" className="h-9 rounded-xl border-glass-border bg-glass text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="dual">Show under lyrics</SelectItem>
-              <SelectItem value="translated">Translation only</SelectItem>
-              <SelectItem value="hidden">Hide translation</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      )}
 
-      {(needsRomanization || needsTranslation) && (
-        <div className="mt-3 flex flex-wrap justify-start gap-2">
-          {needsRomanization && (
-            <button type="button" onClick={romanizeLyrics} disabled={romanizationLoading} className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/[0.08] px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.15] disabled:opacity-60">
-              {romanizationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
-              {romanizationLoading ? "Writing pronunciations…" : "Create romanized lyrics"}
-            </button>
-          )}
+      <details className="group mt-3 rounded-2xl border border-glass-border/70 bg-background/25">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/60 [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-2"><Languages className="size-4 text-primary" aria-hidden /> Translation options</span>
+          <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden />
+        </summary>
+        <div className={`grid gap-2.5 border-t border-glass-border/60 p-3 ${isFullscreen ? "grid-cols-1 lg:grid-cols-2" : "sm:grid-cols-2"}`}>
+          <div className="rounded-xl border border-glass-border/70 bg-background/35 p-2.5">
+            <label htmlFor="player-translation-language" className="mb-1.5 block text-xs font-medium text-muted-foreground">Translation language</label>
+            <Select value={translationLanguage} onValueChange={setTranslationLanguage}>
+              <SelectTrigger id="player-translation-language" aria-label="Translation language" className="h-10 rounded-xl border-glass-border bg-glass text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TRANSLATION_LANGUAGES.map((language) => <SelectItem key={language.code} value={language.code}>{language.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="rounded-xl border border-glass-border/70 bg-background/35 p-2.5">
+            <label htmlFor="player-translation-display" className="mb-1.5 block text-xs font-medium text-muted-foreground">Subtitle display</label>
+            <Select value={translationDisplay} onValueChange={(value) => setTranslationDisplay(value as TranslationDisplayMode)}>
+              <SelectTrigger id="player-translation-display" aria-label="Translation subtitle display" className="h-10 rounded-xl border-glass-border bg-glass text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="dual">Show under lyrics</SelectItem>
+                <SelectItem value="translated">Translation only</SelectItem>
+                <SelectItem value="hidden">Hide translation</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {needsTranslation && (
-            <button type="button" onClick={translateLyrics} disabled={translationLoading} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60">
-              {translationLoading ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : <Languages className="size-3.5" aria-hidden />}
+            <button type="button" onClick={translateLyrics} disabled={translationLoading} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60 sm:col-span-2 sm:justify-self-start">
+              {translationLoading ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Languages className="size-4" aria-hidden />}
               {translationLoading ? "Translating…" : `Translate to ${languageName(translationLanguage)}`}
             </button>
           )}
         </div>
-      )}
+      </details>
     </div>
   );
 

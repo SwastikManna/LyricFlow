@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, AudioLines, Disc3 } from "lucide-react";
-import { listSongs } from "@/api/songs";
+import { listRecentSongs } from "@/api/songs";
 import { formatTime } from "@/hooks/useAudioPlayer";
 import type { LibrarySong } from "@/lib/songs.functions";
 import { LatestSongMiniPlayer } from "@/components/LatestSongMiniPlayer";
@@ -43,7 +43,7 @@ function Home() {
   const loadSongs = useCallback(() => {
     setSongs(null);
     setLoadError(false);
-    listSongs()
+    listRecentSongs()
       .then(setSongs)
       .catch(() => {
         setSongs([]);

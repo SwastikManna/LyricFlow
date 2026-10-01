@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Song } from "@/types/song";
 import type { Lyrics } from "@/types/lyrics";
+import { normalizeSongSearch } from "@/lib/song-constraints";
 
 const DeviceInput = z.object({ deviceId: z.string().min(8).max(100) });
 const SongInput = DeviceInput.extend({ id: z.string().uuid() });
@@ -11,6 +12,21 @@ export interface LibrarySong extends Song {
   bpm: number | null;
 }
 
+export type LibrarySort = "newest" | "oldest" | "title";
+
+const LibraryPageInput = DeviceInput.extend({
+  offset: z.number().int().min(0).max(20_000).default(0),
+  limit: z.number().int().min(1).max(100).default(40),
+  query: z.string().max(100).default(""),
+  sort: z.enum(["newest", "oldest", "title"]).default("newest"),
+});
+
+export interface LibraryPage {
+  songs: LibrarySong[];
+  hasMore: boolean;
+}
+
+/** Latest three songs for the homepage player; the library uses paged search below. */
 export const listSongsFn = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => DeviceInput.parse(d))
   .handler(async ({ data }): Promise<LibrarySong[]> => {
@@ -21,7 +37,7 @@ export const listSongsFn = createServerFn({ method: "POST" })
       .select("*")
       .eq("device_id", data.deviceId)
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(3);
     if (error) throw new Error(error.message);
     return ((rows ?? []) as import("./songs.server").SongRow[]).map((r) => ({
       ...toSong(r, ""),
@@ -30,6 +46,40 @@ export const listSongsFn = createServerFn({ method: "POST" })
         ?? (r.lyrics as { bpm?: number } | null)?.bpm
         ?? null,
     }));
+  });
+
+/** Searchable, ordered library paging keeps large collections responsive. */
+export const listSongsPageFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => LibraryPageInput.parse(d))
+  .handler(async ({ data }): Promise<LibraryPage> => {
+    const { admin, toSong } = await import("./songs.server");
+    const db = await admin();
+    const search = normalizeSongSearch(data.query);
+    let request = db
+      .from("songs" as never)
+      .select("*")
+      .eq("device_id", data.deviceId);
+    if (search) request = request.or(`title.ilike.%${search}%,artist.ilike.%${search}%`);
+    const orderColumn = data.sort === "title" ? "title" : "created_at";
+    const ascending = data.sort !== "newest";
+    let ordered = request.order(orderColumn, { ascending });
+    if (data.sort === "title") ordered = ordered.order("created_at", { ascending: false });
+    const { data: rows, error } = await ordered
+      .order("id", { ascending: true })
+      .range(data.offset, data.offset + data.limit);
+    if (error) throw new Error(error.message);
+
+    const pageRows = (rows ?? []) as import("./songs.server").SongRow[];
+    return {
+      songs: pageRows.slice(0, data.limit).map((row) => ({
+        ...toSong(row, ""),
+        lineCount: (row.lyrics as { lines?: unknown[] } | null)?.lines?.length ?? 0,
+        bpm: (row.lyrics as { bpm?: number; beatGrid?: { bpm?: number } } | null)?.beatGrid?.bpm
+          ?? (row.lyrics as { bpm?: number } | null)?.bpm
+          ?? null,
+      })),
+      hasMore: pageRows.length > data.limit,
+    };
   });
 
 export const getSongFn = createServerFn({ method: "POST" })

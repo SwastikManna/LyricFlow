@@ -8,9 +8,11 @@ import {
   deleteSongFn,
   getSongFn,
   listSongsFn,
+  listSongsPageFn,
   saveAlignedLyricsFn,
   setSongDurationFn,
   type LibrarySong,
+  type LibrarySort,
 } from "@/lib/songs.functions";
 
 /**
@@ -93,8 +95,61 @@ export async function getSong(id: string): Promise<Song | null> {
   return (await getSongWithLyrics(id))?.song ?? null;
 }
 
-export async function listSongs(): Promise<LibrarySong[]> {
+export async function listRecentSongs(): Promise<LibrarySong[]> {
   return listSongsFn({ data: { deviceId: getDeviceId() } });
+}
+
+export async function listSongsPage(input: {
+  offset: number;
+  limit: number;
+  query: string;
+  sort: LibrarySort;
+}) {
+  return listSongsPageFn({ data: { deviceId: getDeviceId(), ...input } });
+}
+
+const LIBRARY_BACKUP_FORMAT = "lyricflow-library-access";
+
+/** Downloads the browser-linked library identifier so access can be restored elsewhere. */
+export function downloadLibraryAccessBackup() {
+  const deviceId = getDeviceId();
+  if (!deviceId || typeof window === "undefined") throw new Error("Library backup is only available in a browser.");
+  const backup = {
+    format: LIBRARY_BACKUP_FORMAT,
+    version: 1,
+    deviceId,
+    createdAt: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `lyricflow-library-access-${new Date().toISOString().slice(0, 10)}.json`;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export async function readLibraryAccessBackup(file: File): Promise<string> {
+  if (file.size > 4096) throw new Error("The backup file is too large.");
+  const value: unknown = JSON.parse(await file.text());
+  if (typeof value !== "object" || value === null) throw new Error("Invalid library backup.");
+  const backup = value as Record<string, unknown>;
+  if (
+    backup.format !== LIBRARY_BACKUP_FORMAT ||
+    backup.version !== 1 ||
+    typeof backup.deviceId !== "string" ||
+    !/^[0-9a-f-]{36}$/i.test(backup.deviceId)
+  ) {
+    throw new Error("This file isn’t a valid LyricFlow library access backup.");
+  }
+  return backup.deviceId;
+}
+
+export function restoreLibraryAccess(deviceId: string) {
+  if (typeof window === "undefined" || !/^[0-9a-f-]{36}$/i.test(deviceId)) {
+    throw new Error("This library access backup is invalid.");
+  }
+  window.localStorage.setItem(DEVICE_KEY, deviceId);
 }
 
 export async function deleteSong(id: string): Promise<void> {
