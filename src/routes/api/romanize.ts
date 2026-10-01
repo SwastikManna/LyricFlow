@@ -2,6 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const MODEL = "google/gemini-3.8-flash";
 
+type RawLine = {
+  id: string;
+  text?: unknown;
+  romanization?: unknown;
+} & Record<string, unknown>;
+
+function isRawLine(line: unknown): line is RawLine {
+  if (!line || typeof line !== "object") return false;
+  return typeof (line as Record<string, unknown>)["id"] === "string";
+}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
