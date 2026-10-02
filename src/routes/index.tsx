@@ -10,26 +10,28 @@ import { RouteError } from "@/components/RouteError";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "LyricFlow — Turn your music into a living lyric experience" },
+      { title: "LyricFlow — Karaoke-style synced lyrics for any song" },
       {
         name: "description",
         content:
-          "Upload a song and follow its lyrics as it plays. Switch between the original script, Latin-letter pronunciation, and optional translations.",
+          "Upload a song and get karaoke-style lyrics that highlight word by word as it plays. Switch between the original script, Latin-letter pronunciation, and optional translations.",
       },
-      { property: "og:title", content: "LyricFlow — Living lyrics for your music" },
+      { property: "og:title", content: "LyricFlow — Karaoke-style synced lyrics for any song" },
       { property: "og:url", content: "https://lyricflow-swastik.lovable.app/" },
       { property: "og:type", content: "website" },
       {
         property: "og:description",
         content:
-          "Follow a song’s lyrics in its original script, as a phonetic romanization, or with an optional translation.",
+          "Turn any song into a karaoke experience: AI-transcribed lyrics, word-by-word highlighting, romanization, and translation.",
       },
+      { property: "og:image", content: "https://lyricflow-swastik.lovable.app/og-image.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "LyricFlow — Living lyrics for your music" },
+      { name: "twitter:title", content: "LyricFlow — Karaoke-style synced lyrics for any song" },
       {
         name: "twitter:description",
-        content: "Follow song lyrics in the original script or as phonetic romanization, with optional translation.",
+        content: "Turn any song into a karaoke experience with word-by-word synced lyrics, romanization, and translation.",
       },
+      { name: "twitter:image", content: "https://lyricflow-swastik.lovable.app/og-image.jpg" },
     ],
     links: [{ rel: "canonical", href: "https://lyricflow-swastik.lovable.app/" }],
     scripts: [
