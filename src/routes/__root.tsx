@@ -94,6 +94,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { name: "twitter:title", content: "LyricFlow — Follow every lyric. In any script." },
         { name: "twitter:description", content: "Follow song lyrics in the original script or as phonetic romanization, with optional translation." },
         { name: "twitter:image", content: "https://lyricflow-swastik.lovable.app/og-image.jpg" },
+        { name: "google-site-verification", content: "7lMb-s_7TPCWJQOi8uLakOabgfA3-NOcZoKLeP_fVcE" },
         ...(googleVerification ? [{ name: "google-site-verification", content: googleVerification }] : []),
       ],
       links: [
