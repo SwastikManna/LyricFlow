@@ -29,7 +29,10 @@ export function LyricExportMenu({ meta, lyrics, loadLyrics, translationLanguage,
   const run = async (format: "lrc" | "srt", variant: ExportVariant = "original") => {
     try {
       const data = lyrics ?? (loadLyrics ? await loadLyrics() : null);
-      if (!data?.lines.length) return toast.error("This song has no lyrics to export yet.");
+      if (!data?.lines.length) {
+        toast.error("This song has no lyrics to export yet.");
+        return;
+      }
       downloadLyrics(format, data, meta, variant);
     } catch {
       toast.error("Couldn't export the lyrics. Please try again.");
