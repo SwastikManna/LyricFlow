@@ -4,6 +4,7 @@ import { ArrowLeft, AudioLines, ChevronDown, House, Languages, LoaderCircle } fr
 import { toast } from "sonner";
 import { AlbumArtwork } from "./AlbumArtwork";
 import { LyricsDisplay } from "./LyricsDisplay";
+import { LyricExportMenu } from "./LyricExportMenu";
 import { PlayerControls } from "./PlayerControls";
 import { ProgressBar } from "./ProgressBar";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
@@ -259,6 +260,17 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
         >
           <House className="size-4" aria-hidden />
         </Link>
+        {playerLyrics && playerLyrics.lines.length > 0 && (
+          <div className="ml-auto">
+            <LyricExportMenu
+              meta={{ title: song.title, artist: song.artist, duration }}
+              lyrics={playerLyrics}
+              translationLanguage={translationLanguage}
+              label="Export"
+              className="inline-flex items-center gap-2 rounded-full border border-glass-border bg-glass px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            />
+          </div>
+        )}
       </header>
 
       <div className={`mx-auto flex w-full flex-1 px-4 sm:px-8 ${isFullscreen ? "min-h-0 max-w-[1600px] flex-col gap-3 overflow-hidden pb-32 pt-3 md:flex-row md:gap-4 lg:gap-5" : "max-w-6xl flex-col gap-5 pb-32 pt-4 sm:gap-6 sm:pb-40 sm:pt-6 lg:flex-row lg:gap-14 lg:pb-44"}`}>
