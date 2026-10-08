@@ -241,7 +241,7 @@ export async function processSong(
   }
 }
 
-export const ACCEPTED_AUDIO_TYPES = [".mp3", ".mp4", ".wav", ".m4a"] as const;
+export const ACCEPTED_AUDIO_TYPES = [".mp3", ".mp4", ".wav", ".m4a", ".flac"] as const;
 
 export function isAcceptedAudioFile(file: File) {
   const name = file.name.toLowerCase();

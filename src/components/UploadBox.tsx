@@ -26,7 +26,7 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
       return;
     }
     if (!isAcceptedAudioFile(candidate)) {
-      setError("That format isn't supported. Use MP3, MP4, WAV or M4A.");
+      setError("That format isn't supported. Use MP3, MP4, WAV, M4A or FLAC.");
       setFile(null);
       return;
     }
@@ -69,7 +69,7 @@ export function UploadBox({ onSubmit, isUploading = false, progress = 0, compact
         <input
           ref={inputRef}
           type="file"
-          accept=".mp3,.mp4,.wav,.m4a,audio/*,video/mp4"
+          accept=".mp3,.mp4,.wav,.m4a,.flac,audio/*,video/mp4"
           className="hidden"
           onChange={(e) => {
             accept(e.target.files?.[0]);
