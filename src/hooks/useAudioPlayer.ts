@@ -56,9 +56,11 @@ export function useAudioPlayer(src: string | undefined) {
     };
   }, [state.isPlaying, emit]);
 
+  const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
   const attach = useCallback(
     (el: HTMLAudioElement | null) => {
       audioRef.current = el;
+      setAudioEl(el);
       if (el) el.volume = state.isMuted ? 0 : state.volume;
     },
     [state.isMuted, state.volume],
@@ -112,6 +114,7 @@ export function useAudioPlayer(src: string | undefined) {
   // Event handlers wired onto the element by the consumer component.
   const audioProps = {
     src,
+    crossOrigin: "anonymous" as const,
     preload: "metadata" as const,
     onLoadedMetadata: (e: React.SyntheticEvent<HTMLAudioElement>) => {
       const d = e.currentTarget.duration;
@@ -137,6 +140,7 @@ export function useAudioPlayer(src: string | undefined) {
 
   return {
     ...state,
+    audioEl,
     attach,
     audioProps,
     currentTimeRef,

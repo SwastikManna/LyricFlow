@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, AudioLines, ChevronDown, House, Languages, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
+import { AmbientGlow } from "./AmbientGlow";
 import { AlbumArtwork } from "./AlbumArtwork";
 import { LyricsDisplay } from "./LyricsDisplay";
 import { LyricExportMenu } from "./LyricExportMenu";
@@ -308,7 +309,7 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
         {/* Live lyrics */}
         <section className={`flex flex-1 flex-col gap-3 ${isFullscreen ? "min-h-0 md:h-full" : "min-h-[55vh] lg:h-[calc(100vh-13rem)] lg:min-h-[520px]"}`} aria-label="Synchronized lyrics">
           <div className={`relative flex-1 overflow-hidden rounded-3xl border border-glass-border/80 bg-foreground/[0.035] shadow-lift backdrop-blur-2xl ${isFullscreen ? "min-h-0" : "min-h-[40vh] lg:min-h-0"}`}>
-            <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,oklch(0.82_0.145_78/0.08),transparent_52%)]" />
+            <AmbientGlow audio={player.audioEl} isPlaying={player.isPlaying} />
             <div className={`relative h-full px-3 sm:px-5 ${isFullscreen ? "min-h-0" : "min-h-[40vh] lg:min-h-0"}`}>
               <LyricsDisplay
                 lyrics={playerLyrics}
