@@ -6,6 +6,7 @@ const TYPES: Record<string, string> = {
   wav: "audio/wav",
   m4a: "audio/mp4",
   mp4: "audio/mp4",
+  flac: "audio/flac",
 };
 
 function json(body: unknown, status = 200) {

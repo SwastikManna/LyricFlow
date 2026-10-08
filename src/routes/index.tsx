@@ -119,7 +119,7 @@ function Home() {
             <a href="#lyric-preview" className="rounded-full px-3 py-3 text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline">
               See a lyric preview
             </a>
-            <span className="text-xs text-muted-foreground">MP3 · MP4 · WAV · M4A · up to 20 MB</span>
+            <span className="text-xs text-muted-foreground">MP3 · MP4 · WAV · M4A · FLAC · up to 20 MB</span>
           </div>
         </div>
 

@@ -11,6 +11,7 @@ const FORMATS: Record<string, string> = {
   wav: "wav",
   m4a: "m4a",
   mp4: "m4a",
+  flac: "flac",
 };
 
 const PROMPT = `You are a lyrics transcription and alignment engine.
