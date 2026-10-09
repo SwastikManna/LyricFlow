@@ -76,5 +76,5 @@ function PlayerPage() {
     );
   }
 
-  return <AudioPlayer song={song} lyrics={lyrics} />;
+  return <AudioPlayer key={song.id} song={song} lyrics={lyrics} />;
 }

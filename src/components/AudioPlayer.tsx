@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { UpNextDrawer } from "./UpNextDrawer";
+import { consumeAutoplay, loadQueue, requestAutoplay, type QueueItem } from "@/lib/play-queue";
 import { ArrowLeft, AudioLines, ChevronDown, House, Languages, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AmbientGlow } from "./AmbientGlow";
@@ -38,6 +40,61 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
   const [wordAlignmentLoading, setWordAlignmentLoading] = useState(false);
 
   useEffect(() => setPlayerLyrics(lyrics), [lyrics]);
+
+  // ---- Queue & continuous play ----
+  const navigate = useNavigate();
+  const [queue, setQueueItems] = useState<QueueItem[]>([]);
+  const [autoAdvance, setAutoAdvanceState] = useState(true);
+  useEffect(() => {
+    setAutoAdvanceState(window.localStorage.getItem("lyricflow:auto-advance") !== "0");
+  }, []);
+  const setAutoAdvance = (value: boolean) => {
+    setAutoAdvanceState(value);
+    window.localStorage.setItem("lyricflow:auto-advance", value ? "1" : "0");
+  };
+  useEffect(() => {
+    let cancelled = false;
+    loadQueue(song.id).then((items) => !cancelled && setQueueItems(items)).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [song.id]);
+  const queueIndex = queue.findIndex((item) => item.id === song.id);
+  const nextItem = queueIndex >= 0 ? queue[queueIndex + 1] : undefined;
+  const prevItem = queueIndex > 0 ? queue[queueIndex - 1] : undefined;
+  const goTo = useCallback(
+    (id: string, autoplay: boolean) => {
+      if (autoplay) requestAutoplay();
+      void navigate({ to: "/player/$songId", params: { songId: id } });
+    },
+    [navigate],
+  );
+  const goPrevious = () => {
+    if (player.currentTimeRef.current > 3 || !prevItem) player.seek(0);
+    else goTo(prevItem.id, player.isPlaying);
+  };
+
+  // Start playing when we arrived here from a queue transition.
+  const autoplayChecked = useRef(false);
+  useEffect(() => {
+    if (!player.isReady || autoplayChecked.current) return;
+    autoplayChecked.current = true;
+    if (consumeAutoplay()) player.play();
+  }, [player.isReady, player]);
+
+  // Auto-advance when the track ends.
+  const nextRef = useRef<{ id?: string | undefined; enabled: boolean }>({ enabled: true });
+  nextRef.current = { id: nextItem?.id, enabled: autoAdvance };
+  useEffect(() => {
+    const el = player.audioEl;
+    if (!el) return;
+    const onEnded = () => {
+      const { id, enabled } = nextRef.current;
+      if (enabled && id) goTo(id, true);
+    };
+    el.addEventListener("ended", onEnded);
+    return () => el.removeEventListener("ended", onEnded);
+  }, [player.audioEl, goTo]);
 
   const duration = player.duration || song.duration;
   const sourceLanguage = playerLyrics?.language.split("-")[0]?.toLowerCase();
@@ -261,8 +318,17 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
         >
           <House className="size-4" aria-hidden />
         </Link>
+        <div className="ml-auto">
+          <UpNextDrawer
+            queue={queue}
+            currentId={song.id}
+            autoplay={autoAdvance}
+            onAutoplayChange={setAutoAdvance}
+            onSelect={(id) => goTo(id, true)}
+          />
+        </div>
         {playerLyrics && playerLyrics.lines.length > 0 && (
-          <div className="ml-auto">
+          <div>
             <LyricExportMenu
               meta={{ title: song.title, artist: song.artist, duration }}
               lyrics={playerLyrics}
@@ -336,8 +402,8 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
               isMuted={player.isMuted}
               isFullscreen={isFullscreen}
               onToggle={player.toggle}
-              onPrevious={() => player.seek(0)}
-              onNext={() => player.seek(duration)}
+              onPrevious={goPrevious}
+              onNext={() => (nextItem ? goTo(nextItem.id, player.isPlaying) : player.seek(duration))}
               onVolumeChange={player.setVolume}
               onToggleMute={player.toggleMute}
               onToggleFullscreen={toggleFullscreen}
