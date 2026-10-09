@@ -122,10 +122,13 @@ function LibraryPage() {
     }
   };
 
-  const open = (song: LibrarySong) =>
-    song.processingStatus === "READY"
-      ? navigate({ to: "/player/$songId", params: { songId: song.id } })
-      : navigate({ to: "/processing/$songId", params: { songId: song.id } });
+  const open = (song: LibrarySong) => {
+    if (song.processingStatus === "READY") {
+      setQueue(songs ?? []);
+      return navigate({ to: "/player/$songId", params: { songId: song.id } });
+    }
+    return navigate({ to: "/processing/$songId", params: { songId: song.id } });
+  };
 
   return (
     <main className="bg-stage min-h-screen bg-background">
