@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioLines, Download, Play, Trash2, Plus, Grid3X3, Search, Upload } from "lucide-react";
 import { AlbumArtwork } from "@/components/AlbumArtwork";
 import { deleteSong, downloadLibraryAccessBackup, getSongWithLyrics, listSongsPage, readLibraryAccessBackup, restoreLibraryAccess } from "@/api/songs";
+import { setQueue } from "@/lib/play-queue";
 import { LyricExportMenu } from "@/components/LyricExportMenu";
 import { formatTime } from "@/hooks/useAudioPlayer";
 import type { LibrarySong, LibrarySort } from "@/lib/songs.functions";
