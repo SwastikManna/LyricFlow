@@ -5,6 +5,8 @@ import { AlbumArtwork } from "@/components/AlbumArtwork";
 import { deleteSong, downloadLibraryAccessBackup, getSongWithLyrics, listSongsPage, readLibraryAccessBackup, restoreLibraryAccess } from "@/api/songs";
 import { setQueue } from "@/lib/play-queue";
 import { LyricExportMenu } from "@/components/LyricExportMenu";
+import { AddToPlaylistMenu } from "@/components/AddToPlaylistMenu";
+import { PlaylistsSection } from "@/components/PlaylistsSection";
 import { formatTime } from "@/hooks/useAudioPlayer";
 import type { LibrarySong, LibrarySort } from "@/lib/songs.functions";
 import { normalizeSongSearch } from "@/lib/song-constraints";
@@ -149,6 +151,8 @@ function LibraryPage() {
       <section className="mx-auto w-full max-w-5xl px-4 pb-16 pt-5 sm:px-8 sm:pb-24 sm:pt-6">
         <h1 className="font-display text-2xl font-semibold sm:text-4xl">Your library</h1>
         <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2 sm:text-base">Your library is linked to this browser.</p>
+
+        <PlaylistsSection />
 
         <details className="mt-4 rounded-2xl border border-glass-border bg-background/35">
           <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
@@ -298,6 +302,12 @@ function LibraryPage() {
                   >
                     <Grid3X3 className="size-4" />
                   </Link>
+                )}
+                {song.processingStatus === "READY" && (
+                  <AddToPlaylistMenu
+                    songId={song.id}
+                    className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-glass hover:text-foreground sm:size-10"
+                  />
                 )}
                 {song.processingStatus === "READY" && song.lineCount > 0 && (
                   <LyricExportMenu
