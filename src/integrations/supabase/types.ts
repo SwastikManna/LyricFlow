@@ -82,6 +82,7 @@ export type Database = {
           file_path: string
           file_size: number
           id: string
+          is_public: boolean
           language: string | null
           lyrics: Json | null
           lyrics_source: string | null
@@ -98,6 +99,7 @@ export type Database = {
           file_path: string
           file_size?: number
           id?: string
+          is_public?: boolean
           language?: string | null
           lyrics?: Json | null
           lyrics_source?: string | null
@@ -114,11 +116,30 @@ export type Database = {
           file_path?: string
           file_size?: number
           id?: string
+          is_public?: boolean
           language?: string | null
           lyrics?: Json | null
           lyrics_source?: string | null
           processing_status?: string
           title?: string
+        }
+        Relationships: []
+      }
+      user_libraries: {
+        Row: {
+          created_at: string
+          device_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          user_id?: string
         }
         Relationships: []
       }

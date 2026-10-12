@@ -8,6 +8,13 @@
       "when": 1791562528049,
       "tag": "0000_create_playlists",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791800650806,
+      "tag": "0001_accounts_and_sharing",
+      "breakpoints": true
     }
   ]
 }

@@ -21,6 +21,7 @@ import { Route as EditSongIdRouteImport } from './routes/edit.$songId'
 import { Route as PlayerSongIdRouteImport } from './routes/player.$songId'
 import { Route as PlaylistsPlaylistIdRouteImport } from './routes/playlists.$playlistId'
 import { Route as ProcessingSongIdRouteImport } from './routes/processing.$songId'
+import { Route as ShareSongIdRouteImport } from './routes/share.$songId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -82,6 +83,11 @@ const ProcessingSongIdRoute = ProcessingSongIdRouteImport.update({
   path: '/processing/$songId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShareSongIdRoute = ShareSongIdRouteImport.update({
+  id: '/share/$songId',
+  path: '/share/$songId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/player/$songId': typeof PlayerSongIdRoute
   '/playlists/$playlistId': typeof PlaylistsPlaylistIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
+  '/share/$songId': typeof ShareSongIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/player/$songId': typeof PlayerSongIdRoute
   '/playlists/$playlistId': typeof PlaylistsPlaylistIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
+  '/share/$songId': typeof ShareSongIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/player/$songId': typeof PlayerSongIdRoute
   '/playlists/$playlistId': typeof PlaylistsPlaylistIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
+  '/share/$songId': typeof ShareSongIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/player/$songId'
     | '/playlists/$playlistId'
     | '/processing/$songId'
+    | '/share/$songId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/player/$songId'
     | '/playlists/$playlistId'
     | '/processing/$songId'
+    | '/share/$songId'
   id:
     | '__root__'
     | '/'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/player/$songId'
     | '/playlists/$playlistId'
     | '/processing/$songId'
+    | '/share/$songId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,6 +196,7 @@ export interface RootRouteChildren {
   PlayerSongIdRoute: typeof PlayerSongIdRoute
   PlaylistsPlaylistIdRoute: typeof PlaylistsPlaylistIdRoute
   ProcessingSongIdRoute: typeof ProcessingSongIdRoute
+  ShareSongIdRoute: typeof ShareSongIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProcessingSongIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/share/$songId': {
+      id: '/share/$songId'
+      path: '/share/$songId'
+      fullPath: '/share/$songId'
+      preLoaderRoute: typeof ShareSongIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -288,6 +308,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayerSongIdRoute: PlayerSongIdRoute,
   PlaylistsPlaylistIdRoute: PlaylistsPlaylistIdRoute,
   ProcessingSongIdRoute: ProcessingSongIdRoute,
+  ShareSongIdRoute: ShareSongIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
