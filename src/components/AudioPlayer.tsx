@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { UpNextDrawer } from "./UpNextDrawer";
+import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
 import { consumeAutoplay, loadQueue, requestAutoplay, type QueueItem } from "@/lib/play-queue";
 import { ArrowLeft, AudioLines, ChevronDown, House, Languages, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -327,6 +328,11 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
             onSelect={(id) => goTo(id, true)}
           />
         </div>
+        <AddToPlaylistMenu
+          songId={song.id}
+          label="Playlist"
+          className="inline-flex items-center gap-2 rounded-full border border-glass-border bg-glass px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        />
         {playerLyrics && playerLyrics.lines.length > 0 && (
           <div>
             <LyricExportMenu

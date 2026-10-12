@@ -19,6 +19,7 @@ import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
 import { Route as ApiTranslateRouteImport } from './routes/api/translate'
 import { Route as EditSongIdRouteImport } from './routes/edit.$songId'
 import { Route as PlayerSongIdRouteImport } from './routes/player.$songId'
+import { Route as PlaylistsPlaylistIdRouteImport } from './routes/playlists.$playlistId'
 import { Route as ProcessingSongIdRouteImport } from './routes/processing.$songId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -71,6 +72,11 @@ const PlayerSongIdRoute = PlayerSongIdRouteImport.update({
   path: '/player/$songId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlaylistsPlaylistIdRoute = PlaylistsPlaylistIdRouteImport.update({
+  id: '/playlists/$playlistId',
+  path: '/playlists/$playlistId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProcessingSongIdRoute = ProcessingSongIdRouteImport.update({
   id: '/processing/$songId',
   path: '/processing/$songId',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/api/translate': typeof ApiTranslateRoute
   '/edit/$songId': typeof EditSongIdRoute
   '/player/$songId': typeof PlayerSongIdRoute
+  '/playlists/$playlistId': typeof PlaylistsPlaylistIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
 }
 export interface FileRoutesByTo {
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/api/translate': typeof ApiTranslateRoute
   '/edit/$songId': typeof EditSongIdRoute
   '/player/$songId': typeof PlayerSongIdRoute
+  '/playlists/$playlistId': typeof PlaylistsPlaylistIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
 }
 export interface FileRoutesById {
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/api/translate': typeof ApiTranslateRoute
   '/edit/$songId': typeof EditSongIdRoute
   '/player/$songId': typeof PlayerSongIdRoute
+  '/playlists/$playlistId': typeof PlaylistsPlaylistIdRoute
   '/processing/$songId': typeof ProcessingSongIdRoute
 }
 export interface FileRouteTypes {
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/api/translate'
     | '/edit/$songId'
     | '/player/$songId'
+    | '/playlists/$playlistId'
     | '/processing/$songId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/api/translate'
     | '/edit/$songId'
     | '/player/$songId'
+    | '/playlists/$playlistId'
     | '/processing/$songId'
   id:
     | '__root__'
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/api/translate'
     | '/edit/$songId'
     | '/player/$songId'
+    | '/playlists/$playlistId'
     | '/processing/$songId'
   fileRoutesById: FileRoutesById
 }
@@ -170,6 +182,7 @@ export interface RootRouteChildren {
   ApiTranslateRoute: typeof ApiTranslateRoute
   EditSongIdRoute: typeof EditSongIdRoute
   PlayerSongIdRoute: typeof PlayerSongIdRoute
+  PlaylistsPlaylistIdRoute: typeof PlaylistsPlaylistIdRoute
   ProcessingSongIdRoute: typeof ProcessingSongIdRoute
 }
 
@@ -245,6 +258,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayerSongIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/playlists/$playlistId': {
+      id: '/playlists/$playlistId'
+      path: '/playlists/$playlistId'
+      fullPath: '/playlists/$playlistId'
+      preLoaderRoute: typeof PlaylistsPlaylistIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/processing/$songId': {
       id: '/processing/$songId'
       path: '/processing/$songId'
@@ -266,6 +286,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTranslateRoute: ApiTranslateRoute,
   EditSongIdRoute: EditSongIdRoute,
   PlayerSongIdRoute: PlayerSongIdRoute,
+  PlaylistsPlaylistIdRoute: PlaylistsPlaylistIdRoute,
   ProcessingSongIdRoute: ProcessingSongIdRoute,
 }
 export const routeTree = rootRouteImport
