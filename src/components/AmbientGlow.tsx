@@ -1,27 +1,9 @@
 import { useEffect, useRef } from "react";
+import { getAudioGraph as getGraph } from "@/lib/audio-graph";
 
 interface AmbientGlowProps {
   audio: HTMLAudioElement | null;
   isPlaying: boolean;
-}
-
-// An <audio> element can only be wired into Web Audio once, so cache it.
-const graphs = new WeakMap<HTMLAudioElement, { ctx: AudioContext; analyser: AnalyserNode }>();
-
-function getGraph(el: HTMLAudioElement) {
-  const cached = graphs.get(el);
-  if (cached) return cached;
-  const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  const ctx = new Ctx();
-  const source = ctx.createMediaElementSource(el);
-  const analyser = ctx.createAnalyser();
-  analyser.fftSize = 256;
-  analyser.smoothingTimeConstant = 0.82;
-  source.connect(analyser);
-  analyser.connect(ctx.destination);
-  const graph = { ctx, analyser };
-  graphs.set(el, graph);
-  return graph;
 }
 
 /** Soft aura behind the lyrics that breathes with the music's bass and mids. */
