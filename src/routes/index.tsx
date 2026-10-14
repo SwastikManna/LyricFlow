@@ -1,3 +1,4 @@
+import { AccountButton } from "@/components/AccountButton";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, AudioLines, Disc3 } from "lucide-react";
@@ -90,6 +91,7 @@ function Home() {
           Lyric<span className="text-primary">Flow</span>
         </Link>
         <nav className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <AccountButton />
           <Link to="/library" className="rounded-full px-2.5 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:text-foreground sm:px-4 sm:tracking-[0.14em]">
             Library
           </Link>

@@ -257,3 +257,9 @@ export function formatFileSize(bytes: number) {
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/** Gives this browser a fresh, empty library (used after signing out). */
+export function resetLibraryAccess() {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(DEVICE_KEY, crypto.randomUUID());
+}

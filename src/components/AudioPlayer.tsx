@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { UpNextDrawer } from "./UpNextDrawer";
 import { AddToPlaylistMenu } from "./AddToPlaylistMenu";
+import { ShareButton } from "./ShareButton";
 import { consumeAutoplay, loadQueue, requestAutoplay, type QueueItem } from "@/lib/play-queue";
 import { ArrowLeft, AudioLines, ChevronDown, House, Languages, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -25,10 +26,12 @@ import type { LyricsScriptMode, TranslationDisplayMode } from "./LyricLine";
 interface AudioPlayerProps {
   song: Song;
   lyrics: SyncedLyrics | null;
+  /** Opened from a public share link: hide owner-only controls. */
+  shared?: boolean | undefined;
 }
 
 /** The full immersive player: artwork + metadata, live lyrics, transport. */
-export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
+export function AudioPlayer({ song, lyrics, shared }: AudioPlayerProps) {
   const player = useAudioPlayer(song.audioFileUrl || undefined);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -55,6 +58,7 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
   };
   useEffect(() => {
     let cancelled = false;
+    if (shared) return;
     loadQueue(song.id).then((items) => !cancelled && setQueueItems(items)).catch(() => {});
     return () => {
       cancelled = true;
@@ -319,6 +323,8 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
         >
           <House className="size-4" aria-hidden />
         </Link>
+        {shared ? <div className="ml-auto" /> : (
+          <>
         <div className="ml-auto">
           <UpNextDrawer
             queue={queue}
@@ -333,6 +339,12 @@ export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
           label="Playlist"
           className="inline-flex items-center gap-2 rounded-full border border-glass-border bg-glass px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         />
+            <ShareButton
+              songId={song.id}
+              className="inline-flex items-center gap-2 rounded-full border border-glass-border bg-glass px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            />
+          </>
+        )}
         {playerLyrics && playerLyrics.lines.length > 0 && (
           <div>
             <LyricExportMenu
