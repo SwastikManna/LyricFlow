@@ -31,7 +31,7 @@ interface AudioPlayerProps {
 }
 
 /** The full immersive player: artwork + metadata, live lyrics, transport. */
-export function AudioPlayer({ song, lyrics }: AudioPlayerProps) {
+export function AudioPlayer({ song, lyrics, shared }: AudioPlayerProps) {
   const player = useAudioPlayer(song.audioFileUrl || undefined);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
